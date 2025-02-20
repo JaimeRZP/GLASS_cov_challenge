@@ -1,0 +1,31 @@
+
+Nside: 256
+Njk: 50
+Output: 
+  save: False
+  path: ./tests/
+
+Fields:
+  Nbins: 2
+  TomoBin: TOM_BIN_ID
+  Pos:
+    Ra: SHE_RA
+    Dec: SHE_DEC
+  She:
+    Ra: SHE_RA
+    Dec: SHE_DEC
+    E1: SHE_E1_CAL
+    E2: -SHE_E2_CAL
+    Weights: SHE_WEIGHT
+
+bins:
+  Lmin: 10
+  Lmax: 256
+  Lbin: 10
+  Logbins: True
+
+DICES:
+  bin: False
+  mask_correction: True
+  shrinkage: True
+  delete2_correction: True
