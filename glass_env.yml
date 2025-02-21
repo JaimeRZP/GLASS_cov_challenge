@@ -226,14 +226,13 @@ dependencies:
       - convolvecl==2022.5.10
       - coroutines==0.3.0
       - cosmology==2022.10.9
-      - dices==0.1.dev439+g46243ee
+      # - dices==0.1.dev439+g46243ee
       - flt==2025.1
       - gaussiancl==2023.1.post0
-      - glass==2024.3.dev57+g84dff24
-      - glass-ext-camb==2023.6
-      - heracles==24.1.2.dev11+g5b2b59e
-      - skysegmentor==0.0.5
-      - threej==2022.4.1
-      - transformcl==2022.8.9
-      - yml==0.0.1
-prefix: /home/jaimerzp/anaconda3/envs/glass
+      - git+https://github.com/glass-dev/glass.git
+      - glass-ext-camb
+      - git+https://github.com/heracles-ec/heracles.git
+      # - skysegmentor
+      - threej
+      - transformcl
+      - yml
