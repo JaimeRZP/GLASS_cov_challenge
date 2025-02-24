@@ -2,7 +2,7 @@
 Nside: 256
 Njk: 50
 Output: 
-  save: False
+  save: True
   path: ./tests/
 
 Fields:
