@@ -91,7 +91,7 @@ subprocess.run(['python', path_to_sb_main, '--config', path_to_sb_cfg], check=Tr
 
 probe_dict = {
     'SHE': 0,
-    'G': 1
+    'POS': 1
 }
 
 cov_10d = np.load('../data/cov_G_10d.npz')['arr_0']
