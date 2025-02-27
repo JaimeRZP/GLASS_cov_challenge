@@ -8,17 +8,17 @@ C_ell:
     l_limber: -1
     limber_integration_method: spline
     non_limber_integration_method: FKEM
-  cl_GG_path: .data/cl_gg_tab.txt
-  cl_GL_path: .data/cl_gl_tab.txt
-  cl_LL_path: .data/cl_ll_tab.txt
+  cl_GG_path: ../data/data_sb/cl_gg_tab.txt
+  cl_GL_path: ../data/data_sb/cl_gl_tab.txt
+  cl_LL_path: ../data/data_sb/cl_ll_tab.txt
   gal_bias_table_filename: ./input/gal_bias_3bins.txt
   galaxy_bias_fit_coeff:
   - 1.33291
   - -0.72414
   - 1.0183
   - -0.14913
-  has_IA: true
-  has_magnification_bias: true
+  has_IA: false
+  has_magnification_bias: false
   has_rsd: false
   mag_bias_table_filedname: ./input/mag_bias.txt
   magnification_bias_fit_coeff:
@@ -27,9 +27,8 @@ C_ell:
   - 0.08321
   - 0.04279
   mult_shear_bias:
-  - 0.0
-  - 0.0
-  - 0.0
+  - 0
+  - 0
   use_input_cls: true
   which_gal_bias: FS2_polynomial_fit
   which_mag_bias: FS2_polynomial_fit
@@ -61,7 +60,7 @@ cosmology:
   wz: -1.0
 covariance:
   G: true
-  G_code: OneCovariance
+  G_code: Spaceborne
   SSC: false
   SSC_code: Spaceborne
   cNG: false
@@ -84,8 +83,8 @@ covariance:
     - G
   row_col_major: row-major
   save_full_cov: true
-  sigma_eps_i: 0.26
-  split_gaussian_cov: true
+  sigma_eps_i: 0.0
+  split_gaussian_cov: false
   triu_tril: triu
   use_KE_approximation: true
   which_b1g_in_resp: from_input
@@ -96,12 +95,13 @@ covariance:
   z_steps: 300
   z_steps_trisp: 50
 ell_binning:
-  ell_max_3x2pt: 3000
-  ell_max_GC: 3000
-  ell_max_WL: 3000
-  ell_max_WL_opt: 5000
-  ell_min: 10
-  nbl_WL_opt: 32
+  binning_type: unbinned
+  ell_max_3x2pt: 256
+  ell_max_GC: 256
+  ell_max_WL: 256
+  ell_max_WL_opt: 256
+  ell_min: 0
+  nbl_WL_opt: 257
 ell_cuts:
   apply_ell_cuts: false
   center_or_min: center
@@ -148,7 +148,7 @@ mask:
 misc:
   bench_filename: ../Spaceborne_bench/output_G{g_code:s}_SSC{ssc_code:s}_cNG{cng_code:s}_KE{use_KE:s}_resp{which_pk_responses:s}_b1g{which_b1g_in_resp:s}_moreoutputs_dict
   num_threads: 40
-  output_path: /home/davide/Documenti/Lavoro/Programmi/GLASS_cov_challenge/data
+  output_path: ../data/data_sb
   save_output_as_benchmark: false
   test_cholesky_decomposition: true
   test_condition_number: true
@@ -156,25 +156,21 @@ misc:
   test_symmetry: true
 nz:
   dzGC:
-  - -0.008848
-  - 0.051368
-  - 0.059484
+  - 0.0
+  - 0.0
   dzWL:
-  - -0.008848
-  - 0.051368
-  - 0.059484
+  - 0.0
+  - 0.0
   ngal_lenses:
-  - 10.0
   - 10.0
   - 10.0
   ngal_sources:
   - 10.0
   - 10.0
-  - 10.0
   normalize_shifted_nz: true
   nz_gaussian_smoothing: false
   nz_gaussian_smoothing_sigma: 2
-  nz_lenses_filename: ./input/nzTab-EP03-zedMin02-zedMax25-mag245.dat
-  nz_sources_filename: ./input/nzTab-EP03-zedMin02-zedMax25-mag245.dat
+  nz_lenses_filename: ../data/data_sb/nz_sb_fmt.txt
+  nz_sources_filename: ../data/data_sb/nz_sb_fmt.txt
   plot_nz_tocheck: true
   shift_nz: true
