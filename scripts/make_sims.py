@@ -11,8 +11,8 @@ from cosmology import Cosmology
 
 #Config
 n = 100
-path = "../gaussian_sims"
-mode = "gaussian"
+path = "../LogNormal_sims"
+mode = "lognormal"
 nside = 256
 lmax = nside
 l = np.arange(0, lmax + 1)
@@ -38,6 +38,14 @@ zbins = glass.equal_dens_zbins(z, dndz, nbins)
 nz = glass.tomo_nz_gausserr(z, dndz, 0.05, zbins)
 nz_1 = nz[:2]
 nz_2 = nz[2:]
+
+print(f"saving nz's to {path}/nzs.npy")
+np.savez(
+    f"{path}/nzs.npz",
+    z=z,
+    nz_1=nz_1,
+    nz_2=nz_2,
+    )
 
 # Check if folder exists
 for i in range(1, n+1):
