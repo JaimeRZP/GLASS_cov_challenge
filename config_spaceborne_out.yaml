@@ -170,7 +170,7 @@ nz:
   normalize_shifted_nz: true
   nz_gaussian_smoothing: false
   nz_gaussian_smoothing_sigma: 2
-  nz_lenses_filename: ../data/data_sb/nz_sb_fmt.txt
-  nz_sources_filename: ../data/data_sb/nz_sb_fmt.txt
+  nz_lenses_filename: ../data/data_sb/nz_pos_fmt.txt
+  nz_sources_filename: ../data/data_sb/nz_she_fmt.txt
   plot_nz_tocheck: true
   shift_nz: true
