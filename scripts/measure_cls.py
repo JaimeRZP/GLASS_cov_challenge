@@ -15,47 +15,43 @@ from heracles.healpy import HealpixMapper
 with open("../dices_conf.yaml", mode="r") as file:
     config = yaml.safe_load(file)
 
+path = "../gaussian_sims"
+mode = "gaussian"
 nside = config["Nside"]
 lmax = config["bins"]["Lmax"]
 mapper = HealpixMapper(nside=nside, lmax=lmax)
 
 # Fields
 Nbins = int(config["Fields"]["Nbins"])
-Keys_Pos_Ra = str(config["Fields"]["Pos"]["Ra"])
-Keys_Pos_Dec = str(config["Fields"]["Pos"]["Dec"])
-Pos_lonlat = (Keys_Pos_Ra, Keys_Pos_Dec)
-Keys_She_Ra = str(config["Fields"]["She"]["Ra"])
-Keys_She_Dec = str(config["Fields"]["She"]["Dec"])
-She_lonlat = (Keys_She_Ra, Keys_She_Dec)
-Keys_She_E1 = str(config["Fields"]["She"]["E1"])
-Keys_She_E2 = str(config["Fields"]["She"]["E2"])
-Keys_She_Weights = str(config["Fields"]["She"]["Weights"])
-
 fields = {
-    "POS": Positions(mapper, *Pos_lonlat, mask="VIS"),
-    "SHE": Shears(
-        mapper,
-        *She_lonlat,
-        Keys_She_E1,
-        Keys_She_E2,
-        Keys_She_Weights,
-        mask="WHT",
-    ),
+    "POS": Positions(mapper, mask="VIS"),
+    "SHE": Shears(mapper, mask="WHT"),
 }
+
+vmap = hp.read_map("../masks/vmap.fits")
+r = hp.Rotator(coord=['G','E']) 
+vmap = r.rotate_map_pixel(vmap)
+vmap = np.abs(hp.ud_grade(vmap, config["Nside"]))
+vmap[vmap <= 1] = 0.0
+vmap[vmap != 0] = vmap[vmap != 0] / vmap[vmap != 0]
+vmap[vmap == 0] = 2.0
+vmap[vmap == 1] = 0.0
+vmap[vmap == 2] = 1.0
 
 l = np.arange(lmax + 1)
 clss = {}
 for i in range(1, 100+1):
     print(f"Loading sim {i}", end='\r')
     data_maps = {}
-    POS1 = heracles.read_maps(f"../gaussian_sims/gaussian_sim_{i}/POS_1.fits")
-    SHE1 = heracles.read_maps(f"../gaussian_sims/gaussian_sim_{i}/SHE_1.fits")
-    POS2 = heracles.read_maps(f"../gaussian_sims/gaussian_sim_{i}/POS_2.fits")
-    SHE2 = heracles.read_maps(f"../gaussian_sims/gaussian_sim_{i}/SHE_2.fits")
-    data_maps[("POS", 1)] = POS1[("POS", 1)]
-    data_maps[("POS", 2)] = POS2[("POS", 2)]
-    data_maps[("SHE", 1)] = SHE1[("SHE", 1)]
-    data_maps[("SHE", 2)] = SHE2[("SHE", 2)]
+    sim_path = f"{path}/{mode}_sim_{i}"
+    POS1 = heracles.read_maps(f"{sim_path}/POS_1.fits")
+    SHE1 = heracles.read_maps(f"{sim_path}/SHE_1.fits")
+    POS2 = heracles.read_maps(f"{sim_path}/POS_2.fits")
+    SHE2 = heracles.read_maps(f"{sim_path}/SHE_2.fits")
+    data_maps[("POS", 1)] = POS1[("POS", 1)]*vmap
+    data_maps[("POS", 2)] = POS2[("POS", 2)]*vmap
+    data_maps[("SHE", 1)] = SHE1[("SHE", 1)]*vmap
+    data_maps[("SHE", 2)] = SHE2[("SHE", 2)]*vmap
 
     alms = transform(fields, data_maps)
     cls = heracles.angular_power_spectra(alms)
