@@ -1,8 +1,9 @@
-from matplotlib import pyplot as plt
-import numpy as np
-import heracles
-import yaml
 import subprocess
+
+import heracles
+import numpy as np
+import yaml
+from matplotlib import pyplot as plt
 
 
 def write_cl_tab(ascii_folder, ascii_filename, cl_3d, ells, zbins):
@@ -25,9 +26,10 @@ data_sb_path = '../data/data_sb'
 nz_path = '../data'
 
 Nbins = 2
+n_probes = 2
 ls = np.arange(256 + 1)
 
-with open('../config_spaceborne_in.yaml', 'r') as f:
+with open('../config_spaceborne_in.yaml') as f:
     cfg = yaml.safe_load(f)
 
 # TODO Jaime: there are actually important, check values used for the challenge
@@ -123,7 +125,13 @@ probe_dict = {
     1: 'POS',
 }
 
-cov_10d = np.zeros((2, 2, 2, 2, len(ls), len(ls), Nbins, Nbins, Nbins, Nbins))
+
+# fmt: off
+cov_10d = np.zeros(
+    (n_probes, n_probes, n_probes, n_probes, 
+     len(ls), len(ls), Nbins, Nbins, Nbins, Nbins)
+)
+# fmt: on
 
 cov_10d[0, 0, 0, 0] = np.load(f'{data_sb_path}/cov_LLLL_G_6D.npz')['arr_0']
 cov_10d[0, 0, 1, 0] = np.load(f'{data_sb_path}/cov_LLGL_G_6D.npz')['arr_0']
@@ -134,10 +142,10 @@ cov_10d[1, 1, 1, 1] = np.load(f'{data_sb_path}/cov_GGGG_G_6D.npz')['arr_0']
 
 # reshape output to heracles format
 cov_dict = {}
-for probe_a_ix in range(2):
-    for probe_b_ix in range(2):
-        for probe_c_ix in range(2):
-            for probe_d_ix in range(2):
+for probe_a_ix in range(n_probes):
+    for probe_b_ix in range(n_probes):
+        for probe_c_ix in range(n_probes):
+            for probe_d_ix in range(n_probes):
                 for zi in range(Nbins):
                     for zj in range(Nbins):
                         for zk in range(Nbins):
@@ -147,26 +155,16 @@ for probe_a_ix in range(2):
                                 probe_c_str = probe_dict[probe_c_ix]
                                 probe_d_str = probe_dict[probe_d_ix]
 
+                                # fmt: off
                                 cov_dict[
-                                    (
-                                        probe_a_str,
-                                        probe_b_str,
-                                        probe_c_str,
-                                        probe_d_str,
-                                        zi,
-                                        zj,
-                                        zk,
-                                        zl,
-                                    )
+                                    (probe_a_str, probe_b_str, 
+                                     probe_c_str, probe_d_str,
+                                     zi, zj, zk, zl)
                                 ] = cov_10d[
-                                    probe_a_ix,
-                                    probe_b_ix,
-                                    probe_c_ix,
-                                    probe_d_ix,
-                                    :,
-                                    :,
-                                    zi,
-                                    zj,
-                                    zk,
-                                    zl,
+                                    probe_a_ix, probe_b_ix, 
+                                    probe_c_ix, probe_d_ix,
+                                    :, :, zi, zj, zk, zl,
                                 ]
+                                # fmt: on
+
+np.savez('../data/sb_cov_dict.npz', cov_dict)
