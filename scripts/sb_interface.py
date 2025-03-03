@@ -167,4 +167,4 @@ for probe_a_ix in range(n_probes):
                                 ]
                                 # fmt: on
 
-np.savez('../data/sb_cov_dict.npz', cov_dict)
+np.savez_compressed('../data/sb_cov_dict.npz', cov_dict)
