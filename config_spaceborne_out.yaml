@@ -1,0 +1,176 @@
+BNT:
+  cl_BNT_transform: false
+  compute_bnt_with_shifted_nz_for_zcuts: false
+  cov_BNT_transform: false
+  include_ia_in_bnt_kernel_for_zcuts: false
+C_ell:
+  cl_CCL_kwargs:
+    l_limber: -1
+    limber_integration_method: spline
+    non_limber_integration_method: FKEM
+  cl_GG_path: ../data/data_sb/cl_gg_tab.txt
+  cl_GL_path: ../data/data_sb/cl_gl_tab.txt
+  cl_LL_path: ../data/data_sb/cl_ll_tab.txt
+  gal_bias_table_filename: ./input/gal_bias_3bins.txt
+  galaxy_bias_fit_coeff:
+  - 1.33291
+  - -0.72414
+  - 1.0183
+  - -0.14913
+  has_IA: false
+  has_magnification_bias: false
+  has_rsd: false
+  mag_bias_table_filedname: ./input/mag_bias.txt
+  magnification_bias_fit_coeff:
+  - -1.50685
+  - 1.35034
+  - 0.08321
+  - 0.04279
+  mult_shear_bias:
+  - 0
+  - 0
+  use_input_cls: true
+  which_gal_bias: FS2_polynomial_fit
+  which_mag_bias: FS2_polynomial_fit
+OneCovariance:
+  consistency_checks: false
+  path_to_oc_executable: /home/davide/Documenti/Lavoro/Programmi/OneCovariance/covariance.py
+  path_to_oc_ini: ./input/config_3x2pt_pure_Cell_general.ini
+  precision_settings: default
+PyCCL:
+  cov_integration_method: spline
+  gsl_params: null
+  load_cached_tkka: false
+  n_samples_wf: 1000
+  spline_params:
+    A_SPLINE_NA_PK: 240
+    K_MAX_SPLINE: 300
+cosmology:
+  N_eff: 3.046
+  ODE: 0.68
+  Ob: 0.05
+  Om: 0.32
+  Om_k0: 0
+  h: 0.6737
+  logT: 7.75
+  m_nu: 0.06
+  ns: 0.966
+  s8: 0.816
+  wa: 0.0
+  wz: -1.0
+covariance:
+  G: true
+  G_code: Spaceborne
+  SSC: false
+  SSC_code: Spaceborne
+  cNG: false
+  cNG_code: PyCCL
+  cov_filename: cov_{which_ng_cov:s}_{probe:s}_{ndim}.npz
+  covariance_ordering_2D: ell_probe_zpair
+  include_b2g: true
+  include_terasawa_terms: false
+  k_steps: 200
+  load_cached_sigma2_b: false
+  log10_k_max: 2
+  log10_k_min: -5
+  n_probes: 2
+  probe_ordering:
+  - - L
+    - L
+  - - G
+    - L
+  - - G
+    - G
+  row_col_major: row-major
+  save_full_cov: true
+  sigma_eps_i: 0.0
+  split_gaussian_cov: false
+  triu_tril: triu
+  use_KE_approximation: true
+  which_b1g_in_resp: from_input
+  which_pk_responses: halo_model
+  which_sigma2_b: polar_cap_on_the_fly
+  z_max: 3.0
+  z_min: 0.02
+  z_steps: 300
+  z_steps_trisp: 50
+ell_binning:
+  binning_type: unbinned
+  ell_max_3x2pt: 256
+  ell_max_GC: 256
+  ell_max_WL: 256
+  ell_max_WL_opt: 256
+  ell_min: 0
+  nbl_WL_opt: 257
+ell_cuts:
+  apply_ell_cuts: false
+  center_or_min: center
+  cl_ell_cuts: false
+  cov_ell_cuts: false
+  kmax_h_over_Mpc_list:
+  - 0.1
+  - 0.16681005
+  - 0.27825594
+  - 0.46415888
+  - 0.77426368
+  - 1.29154967
+  - 2.15443469
+  - 3.59381366
+  - 5.9948425
+  - 10.0
+  kmax_h_over_Mpc_ref: 1.0
+extra_parameters:
+  camb:
+    HMCode_logT_AGN: 7.75
+    dark_energy_model: ppf
+    halofit_version: mead2020_feedback
+    kmax: 100
+    num_massive_neutrinos: 1
+halo_model:
+  concentration: ConcentrationDuffy08
+  halo_bias: HaloBiasTinker10
+  halo_profile_dm: HaloProfileNFW
+  halo_profile_hod: HaloProfileHOD
+  mass_def: MassDef200m
+  mass_function: MassFuncTinker10
+intrinsic_alignment:
+  Aia: 0.16
+  CIA: 0.0134
+  bIA: 0.0
+  eIA: 1.66
+  lumin_ratio_filename: null
+  z_pivot_IA: 0
+mask:
+  fsky: 0.3210678603147902
+  mask_path: '.../mask.fits'
+  nside_mask: 1024
+  survey_area_deg2: 13245
+misc:
+  bench_filename: ../Spaceborne_bench/output_G{g_code:s}_SSC{ssc_code:s}_cNG{cng_code:s}_KE{use_KE:s}_resp{which_pk_responses:s}_b1g{which_b1g_in_resp:s}_moreoutputs_dict
+  num_threads: 40
+  output_path: ../data/data_sb
+  save_output_as_benchmark: false
+  test_cholesky_decomposition: true
+  test_condition_number: true
+  test_numpy_inversion: true
+  test_symmetry: true
+nz:
+  dzGC:
+  - 0.0
+  - 0.0
+  dzWL:
+  - 0.0
+  - 0.0
+  ngal_lenses:
+  - 10.0
+  - 10.0
+  ngal_sources:
+  - 10.0
+  - 10.0
+  normalize_shifted_nz: true
+  nz_gaussian_smoothing: false
+  nz_gaussian_smoothing_sigma: 2
+  nz_lenses_filename: ../data/data_sb/nz_pos_fmt.txt
+  nz_sources_filename: ../data/data_sb/nz_she_fmt.txt
+  plot_nz_tocheck: true
+  shift_nz: true
