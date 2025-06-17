@@ -5,16 +5,13 @@ import heracles
 import heracles.dices as dices
 
 # Config
-config_path = "./dices_config.yaml"
+config_path = "./sims_config.yaml"
 with open(config_path, 'r') as f:
     config = yaml.safe_load(f)
 n = config['nsims']
 nside = config['nside']
 lmax = config['lmax']
 mode = config['mode']  # "lognormal" or "gaussian"
-Njk = config['Njk']
-apply_mask = config['apply_mask']
-binned = config['binned']
 
 nlbins = 10
 ls = np.arange(lmax + 1)
@@ -29,12 +26,12 @@ pp_cls = {}
 pm_cls = {}
 for i in range(1, n+1):
     print(f"Loading sim {i}", end='\r')
-    if os.path.exists(path+mode+f"_sim_{i}/measured_cls.fits"):
-        i_cls[i] = heracles.read(path+mode+f"_sim_{i}/i_cls.fits")
-        nu_cls[i] = heracles.read(path+mode+f"_sim_{i}/nu_cls.fits")
-        pp_cls[i] = heracles.read(path+mode+f"_sim_{i}/pp_cls.fits")
-        pm_cls[i] = heracles.read(path+mode+f"_sim_{i}/pm_cls.fits")
-
+    if os.path.exists(path+mode+f"_sim_{i}/cls_data_wmask.fits"):
+        i_cls[i] = heracles.read(path+mode+f"_sim_{i}/cls_data_i.fits")
+        nu_cls[i] = heracles.read(path+mode+f"_sim_{i}/cls_data_nu.fits")
+        pp_cls[i] = heracles.read(path+mode+f"_sim_{i}/cls_data_pp.fits")
+        pm_cls[i] = heracles.read(path+mode+f"_sim_{i}/cls_data_pm.fits")
+# Binning
 i_cqs = heracles.binned(i_cls, ledges)
 nu_cqs = heracles.binned(nu_cls, ledges)
 pp_cqs = heracles.binned(pp_cls, ledges)

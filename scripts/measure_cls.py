@@ -71,8 +71,8 @@ for i in range(1, n+1):
     data_maps[("SHE", 1)] *= vmap
     data_maps[("SHE", 2)] *= vmap
 
-    alms = transform(fields, data_maps)
-    cls_wmask = heracles.angular_power_spectra(alms)
+    alms_wmask = transform(fields, data_maps)
+    cls_wmask = heracles.angular_power_spectra(alms_wmask)
     heracles.write(path+mode+f"_sim_{i}/cls_data_wmask.fits", cls_wmask)
     heracles.write(path+mode+f"_sim_{i}/cls_mask.fits", mask_cls)
 print("Done")

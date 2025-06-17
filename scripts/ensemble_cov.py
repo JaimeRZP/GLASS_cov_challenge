@@ -5,16 +5,13 @@ import heracles
 import heracles.dices as dices
 
 # Config
-config_path = "./dices_config.yaml"
+config_path = "./sims_config.yaml"
 with open(config_path, 'r') as f:
     config = yaml.safe_load(f)
 n = config['nsims']
 nside = config['nside']
 lmax = config['lmax']
 mode = config['mode']  # "lognormal" or "gaussian"
-Njk = config['Njk']
-apply_mask = config['apply_mask']
-binned = config['binned']
 
 nlbins = 10
 ls = np.arange(lmax + 1)
@@ -32,9 +29,9 @@ pp_cls = {}
 pm_cls = {}
 for i in range(1, n+1):
     print(f"Loading sim {i}", end='\r')
-    if os.path.exists(path+mode+f"_sim_{i}/measured_cls.fits"):
-        cls[i] = heracles.read(path+mode+f"_sim_{i}/measured_cls.fits")
-        cls_wmask[i] = heracles.read(path+mode+f"_sim_{i}/measured_cls_wmask.fits")
+    if os.path.exists(path+mode+f"_sim_{i}/cls_data.fits"):
+        cls[i] = heracles.read(path+mode+f"_sim_{i}/cls_data.fits")
+        cls_wmask[i] = heracles.read(path+mode+f"_sim_{i}/cls_data_wmask.fits")
 
 cqs = heracles.binned(cls, ledges)
 cqs_wmask = heracles.binned(cls_wmask, ledges)

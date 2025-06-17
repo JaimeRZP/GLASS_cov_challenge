@@ -1,4 +1,4 @@
 nside: 256
-lmax: 256
+lmax: 300
 nsims: 100
 mode: "lognormal"

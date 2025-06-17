@@ -85,5 +85,5 @@ for i in range(1, n+1):
 
     # Save cls
     output_path = f"{path}/{folname}/"
-    heracles.write(output_path + "theroy_cls_f.fits", f_cls)
+    heracles.write(output_path + "theory_cls_f.fits", f_cls)
     heracles.write(output_path + "cls_data_i.fits", i_cls)
