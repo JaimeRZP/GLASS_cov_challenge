@@ -16,13 +16,12 @@ nside = config['nside']
 lmax = config['lmax']
 mode = config['mode']  # "lognormal" or "gaussian"
 path = f"../{mode}_sims"
+mask_cls = heracles.read(f"{path}/cls/cls_mask.fits")
 
 for i in range(1, n+1):
-    folname = f"{mode}_sim_{i}"
-    print(f"Unmixing sim {i} in {folname}", end='\r')
+    print(f"Unmixing sim {i}", end='\r')
     # Load cls
-    data_cls = heracles.read(f"{path}/{folname}/cls_data_wmask.fits")
-    mask_cls = heracles.read(f"{path}/{folname}/cls_mask.fits")
+    data_cls = heracles.read(f"{path}/cls/cls_data_{i}.fits")
 
     # PolSpice
     nu_cls = heracles.PolSpice(data_cls, mask_cls, mode='natural', patch_hole=True)
@@ -30,7 +29,6 @@ for i in range(1, n+1):
     pm_cls = heracles.PolSpice(data_cls, mask_cls, mode='minus', patch_hole=True)
 
     # Save cls
-    output_path = f"{path}/{folname}/"
-    heracles.write(output_path + "cls_data_nu.fits", nu_cls)
-    heracles.write(output_path + "cls_data_pp.fits", pp_cls)
-    heracles.write(output_path + "cls_data_pm.fits", pm_cls)
+    heracles.write(f"{path}/cls/cls_data_nu_{i}.fits", nu_cls)
+    heracles.write(f"{path}/cls/cls_data_pp_{i}.fits", pp_cls)
+    heracles.write(f"{path}/cls/cls_data_pm_{i}.fits", pm_cls)

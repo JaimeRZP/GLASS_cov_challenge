@@ -29,24 +29,15 @@ pp_cls = {}
 pm_cls = {}
 for i in range(1, n+1):
     print(f"Loading sim {i}", end='\r')
-    if os.path.exists(path+mode+f"_sim_{i}/cls_data.fits"):
-        cls[i] = heracles.read(path+mode+f"_sim_{i}/cls_data.fits")
-        cls_wmask[i] = heracles.read(path+mode+f"_sim_{i}/cls_data_wmask.fits")
+    cls[i] = heracles.read(path+f"cls/cls_data_{i}.fits")
 
 cqs = heracles.binned(cls, ledges)
-cqs_wmask = heracles.binned(cls_wmask, ledges)
 
 # Covariance
 cls_cov = dices.jackknife_covariance(cls, nd=0)
-cls_wmask_cov = dices.jackknife_covariance(cls_wmask, nd=0)
-
-
 cqs_cov = dices.jackknife_covariance(cqs, nd=0)
-cqs_wmask_cov = dices.jackknife_covariance(cqs_wmask, nd=0)
 
 # Save
-heracles.write(path+"cov_cls.fits", cls_cov)
-heracles.write(path+"cov_cls_wmask.fits", cls_wmask_cov)
-heracles.write(path+"cov_cqs.fits", cqs_cov)
-heracles.write(path+"cov_cqs_wmask.fits", cqs_wmask_cov)
+heracles.write(path+"covs/cov_cls.fits", cls_cov)
+heracles.write(path+"covs/cov_cqs.fits", cqs_cov)
 print("Done")

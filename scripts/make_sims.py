@@ -42,73 +42,73 @@ np.savez(
     nz_2=nz_2,
     )
 
+# make a cosmology
+pars = camb.set_params(
+    H0=100 * h,
+    omch2=Oc * h**2,
+    ombh2=Ob * h**2,
+    NonLinear=camb.model.NonLinear_both,
+)
+pars.set_accuracy(AccuracyBoost=2.0, lAccuracyBoost=2.0, lSampleBoost=2.0)
+pars.Want_CMB = False
+pars.Want_CMB_lensing = False
+pars.min_l = 1
+pars.set_for_lmax(2 * lmax)
+
+pars.SourceWindows = [
+    camb.sources.SplinedSourceWindow(z=z, W=nz_i, source_type="counts") for nz_i in nz_1
+] + [
+    camb.sources.SplinedSourceWindow(z=z, W=nz_i, source_type="lensing") for nz_i in nz_2
+]
+
+# Make theory cls
+cls_dict = camb.get_results(pars).get_source_cls_dict(lmax=lmax, raw_cl=True)
+cls = [cls_dict[f"W{i+1}xW{j+1}"] for i, j in glass.spectra_indices(nbins)]
+
+# Turn into heracles results
+results = {}
+for key in cls_dict.keys():
+    results[key] = heracles.Result(cls_dict[key], ell=l)
+heracles.write(f"{path}/cls/cls_theory.fits", results)
+
+# Make GLASS cls
+shells_1 = [
+    glass.RadialWindow(z, nz_i, np.trapezoid(z * nz_i, z) / np.trapezoid(nz_i, z)) for nz_i in nz_1
+]
+shells_2 = [
+    glass.RadialWindow(z, nz_i, np.trapezoid(z * nz_i, z) / np.trapezoid(nz_i, z)) for nz_i in nz_2
+]
+
+# Make fields
+if mode == "gaussian":
+    # density
+    fields_1 = glass.gaussian_fields(shells_1)
+    # convergence
+    fields_2 = glass.gaussian_fields(shells_2)
+elif mode == "lognormal":
+    # density
+    fields_1 = glass.lognormal_fields(shells_1)
+    # convergence
+    fields_2 = glass.lognormal_fields(shells_2, glass.lognormal_shift_hilbert2011)
+else:
+    raise ValueError(f"Unknown mode: {mode}")
+
+# Solve for spectra
+fields = fields_1 + fields_2
+gls = glass.solve_gaussian_spectra(fields, cls)
+
+if mode == "lognormal":
+    print("Regularizing")
+    gls = glass.regularized_spectra(gls)
+
 # Check if folder exists
 for i in range(1, n+1):
     folname = f"{mode}_sim_{i}"
     print(f"Making sim {i} in folder {folname}", end='\r')
     if not os.path.exists(f"{path}/{folname}"):
         os.makedirs(f"{path}/{folname}")
-        # make a cosmology
-        rng = np.random.default_rng(seed=i)
-        pars = camb.set_params(
-            H0=100 * h,
-            omch2=Oc * h**2,
-            ombh2=Ob * h**2,
-            NonLinear=camb.model.NonLinear_both,
-        )
-        pars.set_accuracy(AccuracyBoost=2.0, lAccuracyBoost=2.0, lSampleBoost=2.0)
-        pars.Want_CMB = False
-        pars.Want_CMB_lensing = False
-        pars.min_l = 1
-        pars.set_for_lmax(2 * lmax)
-
-        pars.SourceWindows = [
-            camb.sources.SplinedSourceWindow(z=z, W=nz_i, source_type="counts") for nz_i in nz_1
-        ] + [
-            camb.sources.SplinedSourceWindow(z=z, W=nz_i, source_type="lensing") for nz_i in nz_2
-        ]
-
-        # Make theory cls
-        cls_dict = camb.get_results(pars).get_source_cls_dict(lmax=lmax, raw_cl=True)
-        cls = [cls_dict[f"W{i+1}xW{j+1}"] for i, j in glass.spectra_indices(nbins)]
-
-        # Turn into heracles results
-        results = {}
-        for key in cls_dict.keys():
-            results[key] = heracles.Result(cls_dict[key], ell=l)
-        heracles.write(f"{path}/{folname}/theory_cls.fits", results)
-
-        # Make GLASS cls
-        shells_1 = [
-            glass.RadialWindow(z, nz_i, np.trapezoid(z * nz_i, z) / np.trapezoid(nz_i, z)) for nz_i in nz_1
-        ]
-        shells_2 = [
-            glass.RadialWindow(z, nz_i, np.trapezoid(z * nz_i, z) / np.trapezoid(nz_i, z)) for nz_i in nz_2
-        ]
-
-        # Make fields
-        if mode == "gaussian":
-            # density
-            fields_1 = glass.gaussian_fields(shells_1)
-            # convergence
-            fields_2 = glass.gaussian_fields(shells_2)
-        elif mode == "lognormal":
-            # density
-            fields_1 = glass.lognormal_fields(shells_1)
-            # convergence
-            fields_2 = glass.lognormal_fields(shells_2, glass.lognormal_shift_hilbert2011)
-        else:
-            raise ValueError(f"Unknown mode: {mode}")
-
-        # Solve for spectra
-        fields = fields_1 + fields_2
-        gls = glass.solve_gaussian_spectra(fields, cls)
-
-        if mode == "lognormal":
-            print("Regularizing")
-            gls = glass.regularized_spectra(gls)
-
         # Generate maps
+        rng = np.random.default_rng(seed=i)
         maps = list(glass.generate(fields, gls, nside))
         POS1 = maps[0]
         POS2 = maps[1]

@@ -34,17 +34,37 @@ mask_fields = {
 }
 
 # vamp
-vmap = hp.read_map("../data/vmap.fits.gz")
-vmap = hp.ud_grade(vmap, nside)
+ref_map = hp.read_map(path+f"{mode}_sim_1/POS_1.fits")
+mask = np.ones_like(ref_map)
+pixel_theta, pixel_phi = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)))
+mask_type = 'None'
+
+if mask_type == 'Patch':
+    mask[np.pi/3 > pixel_theta] = 0.0
+    mask[pixel_theta > 2*np.pi/3] = 0.0
+    mask[pixel_phi > np.pi/2] = 0.0
+    mask[np.pi/8> pixel_phi] = 0.0
+
+if mask_type == 'One third cover':
+    mask[np.pi/3 > pixel_theta] = 0.0
+
+if mask_type == 'Half cover':
+        mask[np.pi/2 > pixel_theta] = 0.0
+
+if mask_type == 'Two thirds cover':
+        mask[2*np.pi/3 > pixel_theta] = 0.0
+else:
+    print("Unknown mask type, using full sky mask")
 
 # mask cls
 vmaps = {}
-vmaps[("VIS", 1)] = vmap
-vmaps[("VIS", 2)] = vmap
-vmaps[("WHT", 1)] = vmap
-vmaps[("WHT", 2)] = vmap
+vmaps[("VIS", 1)] = mask
+vmaps[("VIS", 2)] = mask
+vmaps[("WHT", 1)] = mask
+vmaps[("WHT", 2)] = mask
 mask_alms = heracles.transform(mask_fields, vmaps)
 mask_cls = heracles.angular_power_spectra(mask_alms)
+heracles.write(path+f"cls/cls_mask.fits", mask_cls)
 
 for i in range(1, n+1):
     print(f"Loading sim {i}", end='\r')
@@ -61,18 +81,13 @@ for i in range(1, n+1):
     data_maps[("SHE", 1)] = SHE1[('SHE', 1)]
     data_maps[("SHE", 2)] = SHE2[('SHE', 2)]
 
+    # Masked
+    data_maps[("POS", 1)] *= mask
+    data_maps[("POS", 2)] *= mask
+    data_maps[("SHE", 1)] *= mask
+    data_maps[("SHE", 2)] *= mask
+
     alms = transform(fields, data_maps)
     cls = heracles.angular_power_spectra(alms)
-    heracles.write(path+mode+f"_sim_{i}/cls_data.fits", cls)
-
-    # Masked
-    data_maps[("POS", 1)] *= vmap
-    data_maps[("POS", 2)] *= vmap
-    data_maps[("SHE", 1)] *= vmap
-    data_maps[("SHE", 2)] *= vmap
-
-    alms_wmask = transform(fields, data_maps)
-    cls_wmask = heracles.angular_power_spectra(alms_wmask)
-    heracles.write(path+mode+f"_sim_{i}/cls_data_wmask.fits", cls_wmask)
-    heracles.write(path+mode+f"_sim_{i}/cls_mask.fits", mask_cls)
+    heracles.write(path+f"cls/cls_data_{i}.fits", cls)
 print("Done")
