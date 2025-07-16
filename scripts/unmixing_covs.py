@@ -26,10 +26,13 @@ pp_cls = {}
 pm_cls = {}
 for i in range(1, n+1):
     print(f"Loading sim {i}", end='\r')
-    i_cls[i] = heracles.read(path+f"cls/cls_data_inv_{i}.fits")
-    nu_cls[i] = heracles.read(path+f"cls/cls_data_nu_{i}.fits")
-    pp_cls[i] = heracles.read(path+f"cls/cls_data_pp_{i}.fits")
-    pm_cls[i] = heracles.read(path+f"cls/cls_data_pm_{i}.fits")
+    #i_cls[i] = heracles.read(path+f"cls_inv/cls_data_inv_{i}.fits")
+    nu_cls[i] = heracles.read(path+f"cls_nu/cls_data_nu_{i}.fits")
+    pp_cls[i] = heracles.read(path+f"cls_pp/cls_data_pp_{i}.fits")
+    pm_cls[i] = heracles.read(path+f"cls_pm/cls_data_pm_{i}.fits")
+for i in range(1, 70+1):
+    print(f"Loading sim {i}", end='\r')
+    i_cls[i] = heracles.read(path+f"cls_inv/cls_data_inv_{i}.fits")
 # Binning
 i_cqs = heracles.binned(i_cls, ledges)
 nu_cqs = heracles.binned(nu_cls, ledges)

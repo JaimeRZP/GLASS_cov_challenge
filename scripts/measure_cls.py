@@ -37,7 +37,7 @@ mask_fields = {
 ref_map = hp.read_map(path+f"{mode}_sim_1/POS_1.fits")
 mask = np.ones_like(ref_map)
 pixel_theta, pixel_phi = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)))
-mask_type = 'None'
+mask_type = 'Patch'
 
 if mask_type == 'Patch':
     mask[np.pi/3 > pixel_theta] = 0.0
@@ -59,9 +59,7 @@ else:
 # mask cls
 vmaps = {}
 vmaps[("VIS", 1)] = mask
-vmaps[("VIS", 2)] = mask
 vmaps[("WHT", 1)] = mask
-vmaps[("WHT", 2)] = mask
 mask_alms = heracles.transform(mask_fields, vmaps)
 mask_cls = heracles.angular_power_spectra(mask_alms)
 heracles.write(path+f"cls/cls_mask.fits", mask_cls)
@@ -72,20 +70,13 @@ for i in range(1, n+1):
     sim_path = f"{path}/{mode}_sim_{i}"
     POS1 = heracles.read_maps(f"{sim_path}/POS_1.fits")
     SHE1 = heracles.read_maps(f"{sim_path}/SHE_1.fits")
-    POS2 = heracles.read_maps(f"{sim_path}/POS_2.fits")
-    SHE2 = heracles.read_maps(f"{sim_path}/SHE_2.fits")
 
     # Full sky
     data_maps[("POS", 1)] = POS1[('POS', 1)]
-    data_maps[("POS", 2)] = POS2[('POS', 2)]
     data_maps[("SHE", 1)] = SHE1[('SHE', 1)]
-    data_maps[("SHE", 2)] = SHE2[('SHE', 2)]
-
     # Masked
     data_maps[("POS", 1)] *= mask
-    data_maps[("POS", 2)] *= mask
     data_maps[("SHE", 1)] *= mask
-    data_maps[("SHE", 2)] *= mask
 
     alms = transform(fields, data_maps)
     cls = heracles.angular_power_spectra(alms)

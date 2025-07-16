@@ -21,7 +21,7 @@ mode = config['mode']  # "lognormal" or "gaussian"
 
 path = f"../{mode}_sims"
 l = np.arange(0, lmax + 1)
-nbins = 4
+nbins = 2
 h = 0.7
 Oc = 0.25
 Ob = 0.05
@@ -111,13 +111,9 @@ for i in range(1, n+1):
         rng = np.random.default_rng(seed=i)
         maps = list(glass.generate(fields, gls, nside))
         POS1 = maps[0]
-        POS2 = maps[1]
-        KAPPA1 = maps[2]
-        KAPPA2 = maps[3]
+        KAPPA1 = maps[1]
         Q1, U1 = glass.shear_from_convergence(KAPPA1)
-        Q2, U2 = glass.shear_from_convergence(KAPPA2)
         SHE1 = np.array([Q1, U1])
-        SHE2 = np.array([Q2, U2])
 
         fsky = 1.0
         wmean = 0.0
@@ -157,49 +153,12 @@ for i in range(1, n+1):
                                 fsky=fsky,
                                 spin=2)
 
-        ngal = np.sum(POS2)
-        nbar = (ngal * wmean) / fsky / npix
-        heracles.update_metadata(POS2,
-                                nside=nside,
-                                lmax=lmax,
-                                ngal=ngal,
-                                nbar=nbar,
-                                wmean=wmean,
-                                bias=bias,
-                                var=var,
-                                variance=variance,
-                                neff=ngal/(4*np.pi*fsky),
-                                fsky=fsky,
-                                spin=0)
-
-        ngal = np.sum(SHE2)
-        nbar = (ngal * wmean) / fsky / npix
-        heracles.update_metadata(SHE2,
-                                nside=nside,
-                                lmax=lmax,
-                                ngal=ngal,
-                                nbar=nbar,
-                                wmean=wmean,
-                                bias=bias,
-                                var=var,
-                                variance=variance,
-                                neff=ngal/(2*np.pi*fsky),
-                                fsky=fsky,
-                                spin=2)
 
         # Write maps
         filename = "POS_1.fits"
         data = {("POS", 1): POS1}
         heracles.write_maps(f"{path}/{folname}/{filename}", data, clobber=True)
 
-        filename = "POS_2.fits"
-        data = {("POS", 2): POS2}
-        heracles.write_maps(f"{path}/{folname}/{filename}", data, clobber=True)
-
         filename = "SHE_1.fits"
         data = {("SHE", 1): SHE1}
-        heracles.write_maps(f"{path}/{folname}/{filename}", data, clobber=True)
-
-        filename = "SHE_2.fits"
-        data = {("SHE", 2): SHE2}
         heracles.write_maps(f"{path}/{folname}/{filename}", data, clobber=True)
