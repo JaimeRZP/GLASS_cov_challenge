@@ -55,6 +55,7 @@ if mask_type == 'Two thirds cover':
         mask[2*np.pi/3 > pixel_theta] = 0.0
 else:
     print("Unknown mask type, using full sky mask")
+hp.write_map(path+f"mask.fits", mask, overwrite=True)
 
 # mask cls
 vmaps = {}

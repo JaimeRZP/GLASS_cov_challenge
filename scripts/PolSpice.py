@@ -1,5 +1,8 @@
 import yaml
+import healpy as hp
 import heracles
+import ispice
+
 
 # Config
 config_path = "./sims_config.yaml"
@@ -14,15 +17,16 @@ mask_cls = heracles.read(f"{path}/cls/cls_mask.fits")
 
 for i in range(1, n+1):
     print(f"Unmixing sim {i}", end='\r')
-    # Load cls
-    data_cls = heracles.read(f"{path}/cls/cls_data_{i}.fits")
-
-    # PolSpice
-    nu_cls = heracles.unmixing.natural_unmixing(data_cls, mask_cls, patch_hole=True)
-    #pp_cls = heracles.unmixing.PolSpice(data_cls, mask_cls, mode='plus', patch_hole=True)
-    #pm_cls = heracles.unmixing.PolSpice(data_cls, mask_cls, mode='minus', patch_hole=True)
-
-    # Save cls
-    heracles.write(f"{path}/cls_nu/cls_data_nu_{i}.fits", nu_cls)
-    #heracles.write(f"{path}/cls_pp/cls_data_pp_{i}.fits", pp_cls)
-    #heracles.write(f"{path}/cls_pm/cls_data_pm_{i}.fits", pm_cls)
+    # Load maps
+    data_maps = {}
+    sim_path = f"{path}/{mode}_sim_{i}"
+    POS1 = heracles.read_maps(f"{sim_path}/POS_1.fits")
+    SHE1 = heracles.read_maps(f"{sim_path}/SHE_1.fits")
+    maps_spice = [POS1['POS', 1], SHE1['SHE', 1][0], SHE1['SHE', 1][1]]
+    hp.write_map(f"{sim_path}/maps_spice.fits", maps_spice, overwrite=True)
+    ispice.ispice(f"{sim_path}/maps_spice.fits", 
+                  f"{path}/cls_pols/cls_data_pols_{i}.fits",
+                  maskfile1=f"{path}/mask.fits",
+                  polarization=True,
+                  decouple=True,
+                  binpath="/home/jaimerzp/Documents/UCL/PolSpice_v03-08-03/bin/spice")
