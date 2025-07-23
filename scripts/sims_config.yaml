@@ -1,4 +1,6 @@
 nside: 1024
 lmax: 1500
 nsims: 100
+nlbins: 20
 mode: "lognormal"
+mask_type: "half_sky"

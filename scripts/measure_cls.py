@@ -16,7 +16,8 @@ n = config['nsims']
 nside = config['nside']
 lmax = config['lmax']
 mode = config['mode']  # "lognormal" or "gaussian"
-path = f"../{mode}_sims/"
+mask_type = config.get('mask_type', 'Patch')  # Default to 'Patch' if not specified
+path = f"../{mask_type}/"
 # Fields
 mapper = HealpixMapper(nside=nside, lmax=lmax)
 fields = {
@@ -34,10 +35,9 @@ mask_fields = {
 }
 
 # vamp
-ref_map = hp.read_map(path+f"{mode}_sim_1/POS_1.fits")
+ref_map = hp.read_map(f"../{mode}_sims/{mode}_sim_1/POS_1.fits")
 mask = np.ones_like(ref_map)
 pixel_theta, pixel_phi = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)))
-mask_type = 'Patch'
 
 if mask_type == 'Patch':
     mask[np.pi/3 > pixel_theta] = 0.0
@@ -48,7 +48,7 @@ if mask_type == 'Patch':
 if mask_type == 'One third cover':
     mask[np.pi/3 > pixel_theta] = 0.0
 
-if mask_type == 'Half cover':
+if mask_type == 'half_sky':
         mask[np.pi/2 > pixel_theta] = 0.0
 
 if mask_type == 'Two thirds cover':
@@ -68,17 +68,16 @@ heracles.write(path+f"cls/cls_mask.fits", mask_cls)
 for i in range(1, n+1):
     print(f"Loading sim {i}", end='\r')
     data_maps = {}
-    sim_path = f"{path}/{mode}_sim_{i}"
+    sim_path = f"../{mode}_sims/{mode}_sim_{i}"
     POS1 = heracles.read_maps(f"{sim_path}/POS_1.fits")
     SHE1 = heracles.read_maps(f"{sim_path}/SHE_1.fits")
-
     # Full sky
     data_maps[("POS", 1)] = POS1[('POS', 1)]
     data_maps[("SHE", 1)] = SHE1[('SHE', 1)]
     # Masked
     data_maps[("POS", 1)] *= mask
     data_maps[("SHE", 1)] *= mask
-
+    # Compute Cls
     alms = transform(fields, data_maps)
     cls = heracles.angular_power_spectra(alms)
     heracles.write(path+f"cls/cls_data_{i}.fits", cls)
