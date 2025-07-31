@@ -19,7 +19,7 @@ for i in range(1, n+1):
     data_cls = heracles.read(f"{path}/cls/cls_data_{i}.fits")
 
     # PolSpice
-    nu_cls = heracles.unmixing.natural_unmixing(data_cls, mask_cls, patch_hole=True)
+    nu_cls = heracles.unmixing.natural_unmixing(data_cls, mask_cls, x0=-3, patch_hole=True)
     #pp_cls = heracles.unmixing.PolSpice(data_cls, mask_cls, mode='plus', patch_hole=True)
     #pm_cls = heracles.unmixing.PolSpice(data_cls, mask_cls, mode='minus', patch_hole=True)
 

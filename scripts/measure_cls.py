@@ -1,4 +1,5 @@
 import yaml
+import fitsio
 import numpy as np
 import healpy as hp
 import heracles
@@ -7,6 +8,35 @@ from heracles.fields import Positions, Shears, Visibility, Weights
 from heracles import transform
 from heracles.healpy import HealpixMapper
 
+def _read_map(path, nside, *, nest=False):
+    """
+    Read a HEALPix map in "partial" format from *path* and return it at
+    resolution *nside*.
+
+    The returned NSIDE cannot be larger than the NSIDE of the stored
+    map.
+
+    If *nest* is true, returns the map in NESTED ordering.
+    """
+    data, header = fitsio.read(path, header=True)
+    nside_in = header["NSIDE"]
+    fact = (nside_in // nside) ** 2
+    if fact == 0:
+        raise ValueError(
+            f"requested NSIDE={nside} greater than map NSIDE={nside_in}"
+        )
+    out = np.zeros(12 * nside**2)
+    ipix, wht = data["PIXEL"], data["WEIGHT"]
+    order = header["ORDERING"]
+    if order == "RING":
+        ipix = hp.ring2nest(nside, ipix)
+    elif order != "NESTED":
+        raise ValueError(f"unknown pixel ordering {order} in map")
+    ipix = ipix // fact
+    if not nest:
+        ipix = hp.nest2ring(nside, ipix)
+    np.add.at(out, ipix, wht / fact)
+    return out
 
 # Config
 config_path = "./sims_config.yaml"
@@ -19,7 +49,7 @@ mode = config['mode']  # "lognormal" or "gaussian"
 mask_type = config['mask_type']  # Default to 'Patch' if not specified
 path = f"../{mask_type}/"
 # Fields
-mapper = HealpixMapper(nside=nside, lmax=lmax)
+mapper = HealpixMapper(nside=nside, lmax=lmax, deconvolve=False)
 fields = {
     "POS": Positions(mapper, mask="VIS"),
     "SHE": Shears(mapper, mask="WHT"),
@@ -55,7 +85,7 @@ if mask_type == 'planck':
     mask = hp.ud_grade(mask, nside_out=nside)
 if mask_type == 'rr2':
     path_mask = f"../{mode}_sims/{mask_type}_mask.fits"
-    mask = hp.read_map(path_mask)
+    mask = _read_map(path_mask, nside)
     mask = hp.ud_grade(mask, nside_out=nside)
 hp.write_map(path+f"mask.fits", mask, overwrite=True)
 
