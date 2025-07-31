@@ -6,6 +6,7 @@ import ispice
 
 
 # Config
+# export HEALPIX=/home/jaimerzp/Documents/UCL/Healpix_3.83_2024Nov13/Healpix_3.83/
 config_path = "./sims_config.yaml"
 with open(config_path, 'r') as f:
     config = yaml.safe_load(f)
@@ -32,6 +33,8 @@ for i in range(1, n+1):
                 polarization=True,
                 decouple=False,
                 symmetric_cl=True,
+                kernelsfileout=f"{path}/cls_pols/kernels_pols_{i}.fits",
+                apodizesigma=10.0,
                 #cl_outmask_file=f"{path}/cls_pols/cls_mask_pols_{i}.fits",
                 #cl_outmap_file=f"{path}/cls_pols/cls_data_pols_raw_{i}.fits",
                 #corfile=f"{path}/cls_pols/corr_data_pols_{i}.fits",
@@ -43,6 +46,8 @@ for i in range(1, n+1):
                 polarization=True,
                 decouple=True,
                 symmetric_cl=True,
+                kernelsfileout=f"{path}/cls_pols/kernels_pols_decoupled_{i}.fits",
+                apodizesigma=10.0,
                 #cl_outmask_file=f"{path}/cls_pols/cls_mask_pols_decoupled_{i}.fits",
                 #cl_outmap_file=f"{path}/cls_pols/cls_data_pols_raw_{i}.fits",
                 #corfile=f"{path}/cls_pols/corr_data_pols_{i}.fits",

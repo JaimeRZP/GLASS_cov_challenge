@@ -16,7 +16,7 @@ n = config['nsims']
 nside = config['nside']
 lmax = config['lmax']
 mode = config['mode']  # "lognormal" or "gaussian"
-mask_type = config.get('mask_type', 'Patch')  # Default to 'Patch' if not specified
+mask_type = config['mask_type']  # Default to 'Patch' if not specified
 path = f"../{mask_type}/"
 # Fields
 mapper = HealpixMapper(nside=nside, lmax=lmax)
@@ -35,8 +35,7 @@ mask_fields = {
 }
 
 # vamp
-ref_map = hp.read_map(f"../{mode}_sims/{mode}_sim_1/POS_1.fits")
-mask = np.ones_like(ref_map)
+mask = np.ones(hp.nside2npix(nside))
 pixel_theta, pixel_phi = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)))
 
 if mask_type == 'Patch':
@@ -44,17 +43,20 @@ if mask_type == 'Patch':
     mask[pixel_theta > 2*np.pi/3] = 0.0
     mask[pixel_phi > np.pi/2] = 0.0
     mask[np.pi/8> pixel_phi] = 0.0
-
 if mask_type == 'One third cover':
     mask[np.pi/3 > pixel_theta] = 0.0
-
 if mask_type == 'half_sky':
         mask[np.pi/2 > pixel_theta] = 0.0
-
 if mask_type == 'Two thirds cover':
         mask[2*np.pi/3 > pixel_theta] = 0.0
-else:
-    print("Unknown mask type, using full sky mask")
+if mask_type == 'planck':
+    path_mask = f"../{mode}_sims/{mask_type}_mask.fits"
+    mask = hp.read_map(path_mask)
+    mask = hp.ud_grade(mask, nside_out=nside)
+if mask_type == 'rr2':
+    path_mask = f"../{mode}_sims/{mask_type}_mask.fits"
+    mask = hp.read_map(path_mask)
+    mask = hp.ud_grade(mask, nside_out=nside)
 hp.write_map(path+f"mask.fits", mask, overwrite=True)
 
 # mask cls
