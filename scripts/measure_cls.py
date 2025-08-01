@@ -56,12 +56,12 @@ fields = {
     "VIS": Visibility(mapper),
     "WHT": Weights(mapper),
 }
-mask_mapper = HealpixMapper(nside=2 * nside, lmax=2 * lmax)
+mask_mapper = HealpixMapper(nside=nside, lmax=lmax, deconvolve=False)
 mask_fields = {
-    "POS": Positions(mapper, mask="VIS"),
-    "SHE": Shears(mapper, mask="WHT"),
-    "VIS": Visibility(mapper),
-    "WHT": Weights(mapper),
+    "POS": Positions(mask_mapper, mask="VIS"),
+    "SHE": Shears(mask_mapper, mask="WHT"),
+    "VIS": Visibility(mask_mapper),
+    "WHT": Weights(mask_mapper),
 }
 
 # vamp
@@ -95,6 +95,12 @@ vmaps[("VIS", 1)] = mask
 vmaps[("WHT", 1)] = mask
 mask_alms = heracles.transform(mask_fields, vmaps)
 mask_cls = heracles.angular_power_spectra(mask_alms)
+mms = heracles.mixing_matrices(
+    mask_fields,
+    mask_cls,
+    l1max=lmax,
+)
+heracles.write(path+f"cls/mixmat.fits", mms)
 heracles.write(path+f"cls/cls_mask.fits", mask_cls)
 
 for i in range(1, n+1):
