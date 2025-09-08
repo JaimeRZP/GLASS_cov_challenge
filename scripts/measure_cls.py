@@ -38,6 +38,42 @@ def _read_map(path, nside, *, nest=False):
     np.add.at(out, ipix, wht / fact)
     return out
 
+def __read_map(path, nside, *, nest=False):
+    """
+    Read a HEALPix map in "partial" format from *path* and return it at
+    resolution *nside*.
+
+    The returned NSIDE cannot be larger than the NSIDE of the stored
+    map.
+
+    If *nest* is true, returns the map in NESTED ordering.
+    """
+    data, header = fitsio.read(path, header=True)
+    nside_in = header["NSIDE"]
+    order = header["ORDERING"]
+    cols = data.dtype.names
+    fact = (nside_in // nside) ** 2
+    if fact == 0:
+        raise ValueError(
+            f"requested NSIDE={nside} greater than map NSIDE={nside_in}"
+        )
+    out = np.zeros(12 * nside**2)
+    if header["INDXSCHM"] == "EXPLICIT":
+        ipix = data[cols[0]].ravel()
+        wht = data[cols[1]].ravel()
+    else:
+        wht = data[cols[0]].ravel()
+        ipix = np.arange(wht.size)
+    if order == "RING":
+        ipix = hp.ring2nest(nside, ipix)
+    elif order != "NESTED":
+        raise ValueError(f"unknown pixel ordering {order} in map")
+    ipix = ipix // fact
+    if not nest:
+        ipix = hp.nest2ring(nside, ipix)
+    np.add.at(out, ipix, wht / fact)
+    return out
+
 # Config
 config_path = "./sims_config.yaml"
 with open(config_path, 'r') as f:
@@ -79,6 +115,10 @@ if mask_type == 'half_sky':
         mask[np.pi/2 > pixel_theta] = 0.0
 if mask_type == 'Two thirds cover':
         mask[2*np.pi/3 > pixel_theta] = 0.0
+if mask_type == 'dr1':
+    path_mask = f"../{mode}_sims/{mask_type}_mask.fits"
+    mask = __read_map(path_mask, nside)
+    mask = hp.ud_grade(mask, nside_out=nside)
 if mask_type == 'planck':
     path_mask = f"../{mode}_sims/{mask_type}_mask.fits"
     mask = hp.read_map(path_mask)
@@ -100,7 +140,7 @@ mms = heracles.mixing_matrices(
     mask_cls,
     l1max=lmax,
 )
-heracles.write(path+f"cls/mixmat.fits", mms)
+heracles.write(path+f"/mixmat.fits", mms)
 heracles.write(path+f"cls/cls_mask.fits", mask_cls)
 
 for i in range(1, n+1):

@@ -66,7 +66,7 @@ ledges = np.logspace(np.log10(10), np.log10(lmax), nlbins + 1)
 lgrid = (ledges[1:] + ledges[:-1]) / 2
 
 # Compute mixing matrix
-mms = heracles.read(f"{path}/cls/mixmat.fits")
+mms = heracles.read(f"{path}/mixmat.fits")
 # Invert the mixing matrix
 inv_mms_pppp = np.linalg.pinv(mms["POS", "POS", 1, 1].array, rtol=rtol).T
 inv_mms_pepe = np.linalg.pinv(mms["POS", "SHE", 1, 1].array, rtol=rtol).T
@@ -83,7 +83,7 @@ inv_mms = {
     ("SHE", "SHE", 1, 1): Result(np.array([inv_mms_eeee, inv_mms_eebb, inv_mms_ebeb]), axis=mms["SHE", "SHE", 1, 1].axis, ell=ls),
     }
 # Save inverted mixing matrix
-heracles.write(f"{path}/cls/inv_mixmat.fits", inv_mms)
+heracles.write(f"{path}/inv_mixmat.fits", inv_mms)
 
 # binned mixing matrix
 mmqs = heracles.binned(mms, ledges)
