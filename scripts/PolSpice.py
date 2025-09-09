@@ -35,6 +35,7 @@ for i in range(1, n+1):
                 symmetric_cl=True,
                 kernelsfileout=f"{path}/cls_pols/kernels_pols_{i}.fits",
                 apodizesigma=10.0,
+                pixelfile=False,
                 #cl_outmask_file=f"{path}/cls_pols/cls_mask_pols_decoupled_{i}.fits",
                 #cl_outmap_file=f"{path}/cls_pols/cls_data_pols_raw_{i}.fits",
                 #corfile=f"{path}/cls_pols/corr_data_pols_{i}.fits",
