@@ -3,4 +3,4 @@ lmax: 1500
 nsims: 100
 nlbins: 20
 mode: "lognormal"
-mask_type: "dr1"
+mask_type: "planck"

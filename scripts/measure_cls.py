@@ -139,6 +139,7 @@ mms = heracles.mixing_matrices(
     mask_fields,
     mask_cls,
     l1max=lmax,
+    #l2max=2*lmax,
 )
 heracles.write(path+f"/mixmat.fits", mms)
 heracles.write(path+f"cls/cls_mask.fits", mask_cls)
