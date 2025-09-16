@@ -1,6 +1,8 @@
 nside: 1024
 lmax: 1500
+lmax_mask: 1500
 nsims: 100
 nlbins: 20
+rtol: 0.01
 mode: "lognormal"
-mask_type: "planck"
+mask_type: "half_sky"

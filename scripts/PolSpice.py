@@ -33,7 +33,7 @@ for i in range(1, n+1):
                 polarization=True,
                 decouple=True,
                 symmetric_cl=True,
-                kernelsfileout=f"{path}/cls_pols/kernels_pols_{i}.fits",
+                kernelsfileout=f"{path}/cls_pols/kernels_pols_{i}_l1max_{lmax}.fits",
                 apodizesigma=10.0,
                 pixelfile=False,
                 #cl_outmask_file=f"{path}/cls_pols/cls_mask_pols_decoupled_{i}.fits",
@@ -52,4 +52,4 @@ for i in range(1, n+1):
                   [pols_cl[5], pols_cl[2]]]),
         axis=(2,), ell=l)
     # Save cls
-    heracles.write(f"{path}/cls_pols/cls_data_pols_{i}.fits", _pols_cl)
+    heracles.write(f"{path}/cls_pols/cls_data_pols_{i}_lmax_{lmax}.fits", _pols_cl)

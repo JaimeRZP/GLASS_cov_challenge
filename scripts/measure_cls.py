@@ -3,10 +3,10 @@ import fitsio
 import numpy as np
 import healpy as hp
 import heracles
-import heracles.dices as dices
 from heracles.fields import Positions, Shears, Visibility, Weights
 from heracles import transform
 from heracles.healpy import HealpixMapper
+
 
 def _read_map(path, nside, *, nest=False):
     """
@@ -37,6 +37,7 @@ def _read_map(path, nside, *, nest=False):
         ipix = hp.nest2ring(nside, ipix)
     np.add.at(out, ipix, wht / fact)
     return out
+
 
 def __read_map(path, nside, *, nest=False):
     """
@@ -81,24 +82,10 @@ with open(config_path, 'r') as f:
 n = config['nsims']
 nside = config['nside']
 lmax = config['lmax']
+lmax_mask = config['lmax_mask']
 mode = config['mode']  # "lognormal" or "gaussian"
 mask_type = config['mask_type']  # Default to 'Patch' if not specified
 path = f"../{mask_type}/"
-# Fields
-mapper = HealpixMapper(nside=nside, lmax=lmax, deconvolve=False)
-fields = {
-    "POS": Positions(mapper, mask="VIS"),
-    "SHE": Shears(mapper, mask="WHT"),
-    "VIS": Visibility(mapper),
-    "WHT": Weights(mapper),
-}
-mask_mapper = HealpixMapper(nside=nside, lmax=lmax, deconvolve=False)
-mask_fields = {
-    "POS": Positions(mask_mapper, mask="VIS"),
-    "SHE": Shears(mask_mapper, mask="WHT"),
-    "VIS": Visibility(mask_mapper),
-    "WHT": Weights(mask_mapper),
-}
 
 # vamp
 mask = np.ones(hp.nside2npix(nside))
@@ -129,6 +116,22 @@ if mask_type == 'rr2':
     mask = hp.ud_grade(mask, nside_out=nside)
 hp.write_map(path+f"mask.fits", mask, overwrite=True)
 
+# Fields
+mapper = HealpixMapper(nside=nside, lmax=lmax, deconvolve=False)
+fields = {
+    "POS": Positions(mapper, mask="VIS"),
+    "SHE": Shears(mapper, mask="WHT"),
+    "VIS": Visibility(mapper),
+    "WHT": Weights(mapper),
+}
+mask_mapper = HealpixMapper(nside=nside, lmax=lmax_mask, deconvolve=False)
+mask_fields = {
+    "POS": Positions(mask_mapper, mask="VIS"),
+    "SHE": Shears(mask_mapper, mask="WHT"),
+    "VIS": Visibility(mask_mapper),
+    "WHT": Weights(mask_mapper),
+}
+
 # mask cls
 vmaps = {}
 vmaps[("VIS", 1)] = mask
@@ -139,10 +142,10 @@ mms = heracles.mixing_matrices(
     mask_fields,
     mask_cls,
     l1max=lmax,
-    #l2max=2*lmax,
+    l2max=lmax_mask,
 )
-heracles.write(path+f"/mixmat.fits", mms)
-heracles.write(path+f"cls/cls_mask.fits", mask_cls)
+heracles.write(path+f"/mixmat_l1max_{lmax}_l2max_{lmax_mask}.fits", mms)
+heracles.write(path+f"cls/cls_mask_lmax_{lmax_mask}.fits", mask_cls)
 
 for i in range(1, n+1):
     print(f"Loading sim {i}", end='\r')
@@ -159,5 +162,5 @@ for i in range(1, n+1):
     # Compute Cls
     alms = transform(fields, data_maps)
     cls = heracles.angular_power_spectra(alms)
-    heracles.write(path+f"cls/cls_data_{i}.fits", cls)
+    heracles.write(path+f"cls/cls_data_{i}_lmax_{lmax}.fits", cls)
 print("Done")

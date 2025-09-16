@@ -4,11 +4,13 @@ import healpy as hp
 import heracles
 import pymaster as nmt
 
+
 # conda activate nmt
 def compute_master(f_a, f_b, wsp):
     cl_coupled = nmt.compute_coupled_cell(f_a, f_b)
     cl_decoupled = wsp.decouple_cell(cl_coupled)
     return cl_decoupled
+
 
 # Config
 config_path = "./sims_config.yaml"
@@ -70,4 +72,4 @@ for i in range(1, n+1):
                  [cls_22[2], cls_22[3]]]),
         axis=(2,), ell=lgrid)
     # Save results
-    heracles.write(f"{path}/cls_nmt/cqs_data_nmt_np_{i}.fits", _cls_nmt)
+    heracles.write(f"{path}/cls_nmt/cqs_data_nmt_np_{i}_lmax_{lmax}.fits", _cls_nmt)

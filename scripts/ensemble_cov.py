@@ -11,6 +11,7 @@ with open(config_path, 'r') as f:
 n = config['nsims']
 nside = config['nside']
 lmax = config['lmax']
+lmax_mask = config['lmax_mask']
 nlbins = config.get('nlbins', 20)  # Default to 20 if not specified
 mode = config['mode']  # "lognormal" or "gaussian"
 mask_type = config.get('mask_type', 'Patch')  # Default to 'Patch' if not specified
@@ -25,7 +26,7 @@ ls = np.arange(lmax + 1)
 cls = {}
 for i in range(1, n+1):
     print(f"Loading sim {i}", end='\r')
-    cls[i] = heracles.read(path+f"cls/cls_data_{i}.fits")
+    cls[i] = heracles.read(path+f"cls/cls_data_{i}_lmax_{lmax}.fits")
 # Binning cls
 cqs = heracles.binned(cls, ledges)
 
@@ -34,6 +35,6 @@ cls_cov = dices.jackknife_covariance(cls, nd=0)
 cqs_cov = dices.jackknife_covariance(cqs, nd=0)
 
 # Save
-heracles.write(path+"covs/cov_cls.fits", cls_cov)
-heracles.write(path+"covs/cov_cqs.fits", cqs_cov)
+heracles.write(path+f"covs/cov_cls_l1max_{lmax}_l2max_{lmax_mask}.fits", cls_cov)
+heracles.write(path+f"covs/cov_cqs_l1max_{lmax}_l2max_{lmax_mask}.fits", cqs_cov)
 print("Done")
