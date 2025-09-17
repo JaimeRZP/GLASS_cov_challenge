@@ -24,10 +24,7 @@ print(f"Using {len(lgrid)} bins for the covariance matrix.")
 nmt_cqs = {}
 i_cls = {}
 nu_cls = {}
-#pp_cls = {}
-#pm_cls = {}
 pols_cls = {}
-#dpols_cls = {}
 for i in range(1, n+1):
     print(f"Loading sim {i}", end='\r')
     nmt_cqs[i] = heracles.read(path+f"cls_nmt/cqs_data_nmt_np_{i}.fits")
