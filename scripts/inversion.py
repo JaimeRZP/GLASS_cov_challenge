@@ -20,7 +20,7 @@ rtol = config.get('rtol', 1e-2)
 # Compute mixing matrix
 mms = heracles.read(f"{path}/mixmat_l1max_{lmax}_l2max_{lmax_mask}.fits")
 # Invert the mixing matrix
-inv_mms = invert_mixing_matrix(mms, rtol=rtol)
+inv_mms = invert_mixing_matrix(mms, rtol=1e-2)
 heracles.write(path+f"/inv_mixmat_l1max_{lmax}_l2max_{lmax_mask}.fits", inv_mms)
 
 for i in range(1, n+1):

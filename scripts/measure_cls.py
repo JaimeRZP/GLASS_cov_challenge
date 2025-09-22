@@ -91,7 +91,7 @@ path = f"../{mask_type}/"
 mask = np.ones(hp.nside2npix(nside))
 pixel_theta, pixel_phi = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)))
 
-if mask_type == 'Patch':
+if mask_type == 'patch':
     mask[np.pi/3 > pixel_theta] = 0.0
     mask[pixel_theta > 2*np.pi/3] = 0.0
     mask[pixel_phi > np.pi/2] = 0.0

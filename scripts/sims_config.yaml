@@ -3,6 +3,6 @@ lmax: 1500
 lmax_mask: 2000
 nsims: 100
 nlbins: 20
-rtol: 0.01
+rtol: 1e-6
 mode: "lognormal"
-mask_type: "dr1"
+mask_type: "rr2"
