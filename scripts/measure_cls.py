@@ -92,10 +92,13 @@ mask = np.ones(hp.nside2npix(nside))
 pixel_theta, pixel_phi = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)))
 
 if mask_type == 'patch':
-    mask[np.pi/3 > pixel_theta] = 0.0
-    mask[pixel_theta > 2*np.pi/3] = 0.0
-    mask[pixel_phi > np.pi/2] = 0.0
-    mask[np.pi/8> pixel_phi] = 0.0
+    path_mask = f"../{mode}_sims/dr1_mask.fits"
+    mask = __read_map(path_mask, nside)
+    mask = hp.ud_grade(mask, nside_out=nside)
+    mask[np.pi/2 > pixel_theta] = 0.0
+    #mask[pixel_theta > 2*np.pi/3] = 0.0
+    #mask[pixel_phi > np.pi/2] = 0.0
+    #mask[np.pi/8> pixel_phi] = 0.0
 if mask_type == 'One third cover':
     mask[np.pi/3 > pixel_theta] = 0.0
 if mask_type == 'half_sky':

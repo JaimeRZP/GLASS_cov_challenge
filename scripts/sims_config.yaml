@@ -5,4 +5,4 @@ nsims: 100
 nlbins: 20
 rtol: 1e-6
 mode: "lognormal"
-mask_type: "rr2"
+mask_type: "patch"
