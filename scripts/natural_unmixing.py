@@ -16,6 +16,8 @@ mode = config['mode']  # "lognormal" or "gaussian"
 mask_type = config['mask_type'] # Default to 'Patch' if not specified
 path = f"../{mask_type}/"
 mask_cls = heracles.read(f"{path}/cls/cls_mask_lmax_{lmax_mask}.fits")
+x0_nu = config.get('x0_nu', -3.5)
+x0_inv = config.get('x0_inv', -6.5)
 
 mask_mapper = HealpixMapper(nside=nside, lmax=lmax, deconvolve=False)
 mask_fields = {
@@ -34,7 +36,7 @@ for m_key in m_keys:
     _wm = heracles.transforms.cl2corr(_m)
     # Smooth wm
     _wm = _wm.T[0]
-    _wm *= heracles.unmixing.logistic(np.log10(abs(_wm)), x0=-3.5, k=50)
+    _wm *= heracles.unmixing.logistic(np.log10(abs(_wm)), x0=x0_nu)
     mask_corr[m_key] = _wm
     __inv_wm = np.zeros((4, len(_wm)))
     __inv_wm[0] = 1/_wm

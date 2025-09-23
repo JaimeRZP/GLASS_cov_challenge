@@ -4,5 +4,6 @@ lmax_mask: 2000
 nsims: 100
 nlbins: 20
 rtol: 1e-6
+x0_nu: -3.5
 mode: "lognormal"
-mask_type: "patch"
+mask_type: "dr1"
