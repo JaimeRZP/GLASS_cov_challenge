@@ -1,5 +1,6 @@
 import yaml
 import heracles
+import numpy as np
 from heracles.result import truncated
 from heracles.twopoint import invert_mixing_matrix, apply_mixing_matrix
 
@@ -15,12 +16,15 @@ nlbins = config.get('nlbins', 20)  # Default to 20 if not specified
 mode = config['mode']  # "lognormal" or "gaussian"
 mask_type = config.get('mask_type', 'Patch')  # Default to 'Patch' if not specified
 path = f"../{mask_type}"
-rtol = config.get('rtol', 1e-2)
+rtol_inv = config.get('rtol_inv', 1e-2)
+rtol_nu = config.get('rtol_nu', 1e-3)
+rtol_nu = np.float32(rtol_nu)
+rtol_inv = np.float32(rtol_inv)
 
 # Compute mixing matrix
 mms = heracles.read(f"{path}/mixmat_l1max_{lmax}_l2max_{lmax_mask}.fits")
 # Invert the mixing matrix
-inv_mms = invert_mixing_matrix(mms, rtol=rtol)
+inv_mms = invert_mixing_matrix(mms, rtol=rtol_inv)
 heracles.write(path+f"/inv_mixmat_l1max_{lmax}_l2max_{lmax_mask}.fits", inv_mms)
 
 for i in range(1, n+1):

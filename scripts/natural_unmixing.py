@@ -16,8 +16,10 @@ mode = config['mode']  # "lognormal" or "gaussian"
 mask_type = config['mask_type'] # Default to 'Patch' if not specified
 path = f"../{mask_type}/"
 mask_cls = heracles.read(f"{path}/cls/cls_mask_lmax_{lmax_mask}.fits")
-x0_nu = config.get('x0_nu', -3.5)
-x0_inv = config.get('x0_inv', -6.5)
+rtol_nu = config.get('rtol_nu', 1e-3)
+rtol_inv = config.get('rtol_inv', 1e-2)
+rtol_nu = np.float32(rtol_nu)
+rtol_inv = np.float32(rtol_inv)
 
 mask_mapper = HealpixMapper(nside=nside, lmax=lmax, deconvolve=False)
 mask_fields = {
@@ -33,13 +35,16 @@ inv_mask_cls = {}
 m_keys = list(mask_cls.keys())
 for m_key in m_keys:
     _m = mask_cls[m_key]
-    _wm = heracles.transforms.cl2corr(_m)
-    # Smooth wm
-    _wm = _wm.T[0]
-    _wm *= heracles.unmixing.logistic(np.log10(abs(_wm)), x0=x0_nu)
+    _wm = heracles.transforms.cl2corr(_m).T[0]
     mask_corr[m_key] = _wm
+    # psuedoinverse wm
+    cutoff = rtol_nu * np.max(np.abs(_wm))
+    _wm *= heracles.unmixing.logistic(np.log10(abs(_wm)), x0=np.log10(cutoff))
+    inv_wm = 1 / _wm
+    #inv_wm = np.array([1/wi if abs(wi) > cutoff else 0 for wi in _wm])
+    # transform back to cls
     __inv_wm = np.zeros((4, len(_wm)))
-    __inv_wm[0] = 1/_wm
+    __inv_wm[0] = inv_wm
     _inv_mask_cls = heracles.transforms.corr2cl(__inv_wm.T).T[0]
     inv_mask_cls[m_key] = heracles.Result(_inv_mask_cls,
                                           axis=mask_cls[m_key].axis,
