@@ -31,7 +31,7 @@ b = nmt.NmtBin.from_edges(ledges[:-1].astype(int), ledges[1:].astype(int))
 b.lmax = lmax
 
 mask = hp.read_map(f"{path}/mask.fits")
-msk_apo = nmt.mask_apodization(mask, 10.0, apotype='C1')
+mask_apo = nmt.mask_apodization(mask, 1.0, apotype='C1')
 
 # workspaces
 sim_path = f"../{mode}_sims/{mode}_sim_1"
@@ -40,8 +40,8 @@ SHE1 = heracles.read_maps(f"{sim_path}/SHE_1.fits")
 map_t = POS1['POS', 1]
 map_q = SHE1['SHE', 1][0]
 map_u = SHE1['SHE', 1][1]
-f0 = nmt.NmtField(msk_apo, [map_t], lmax=lmax)
-f2 = nmt.NmtField(msk_apo, [map_q, map_u], lmax=lmax)
+f0 = nmt.NmtField(mask_apo, [map_t], lmax=lmax)
+f2 = nmt.NmtField(mask_apo, [map_q, map_u], lmax=lmax)
 w00 = nmt.NmtWorkspace.from_fields(f0, f0, b)
 w02 = nmt.NmtWorkspace.from_fields(f0, f2, b)
 w22 = nmt.NmtWorkspace.from_fields(f2, f2, b)
@@ -56,8 +56,8 @@ for i in range(1, n+1):
     map_q = SHE1['SHE', 1][0]
     map_u = SHE1['SHE', 1][1]
     # Make fields
-    f0 = nmt.NmtField(msk_apo, [map_t])
-    f2 = nmt.NmtField(msk_apo, [map_q, map_u])
+    f0 = nmt.NmtField(mask_apo, [map_t])
+    f2 = nmt.NmtField(mask_apo, [map_q, map_u])
     # Compute cls
     cls_00 = compute_master(f0, f0, w00)
     cls_02 = compute_master(f0, f2, w02)
