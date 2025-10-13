@@ -33,6 +33,7 @@ for i in range(1, n+1):
                 polarization=True,
                 decouple=True,
                 symmetric_cl=True,
+                covfileout=f"{path}/cls_pols/cov_data_pols_{i}_l1max_{lmax}.fits",
                 kernelsfileout=f"{path}/cls_pols/kernels_pols_{i}_l1max_{lmax}.fits",
                 apodizesigma=10.0,
                 pixelfile=False,

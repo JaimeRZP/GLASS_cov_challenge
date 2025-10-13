@@ -3,6 +3,7 @@ import numpy as np
 import healpy as hp
 import heracles
 import pymaster as nmt
+import heracles.dices as dices
 
 
 # conda activate nmt
@@ -31,7 +32,7 @@ b = nmt.NmtBin.from_edges(ledges[:-1].astype(int), ledges[1:].astype(int))
 b.lmax = lmax
 
 mask = hp.read_map(f"{path}/mask.fits")
-mask_apo = nmt.mask_apodization(mask, 1.0, apotype='C1')
+mask_apo = nmt.mask_apodization(mask, 0.0, apotype='C1')
 
 # workspaces
 sim_path = f"../{mode}_sims/{mode}_sim_1"
@@ -46,6 +47,7 @@ w00 = nmt.NmtWorkspace.from_fields(f0, f0, b)
 w02 = nmt.NmtWorkspace.from_fields(f0, f2, b)
 w22 = nmt.NmtWorkspace.from_fields(f2, f2, b)
 
+cls = {}
 for i in range(1, n+1):
     print(f"Unmixing sim {i}", end='\r')
     # Load maps
@@ -72,4 +74,14 @@ for i in range(1, n+1):
                  [cls_22[2], cls_22[3]]]),
         axis=(2,), ell=lgrid)
     # Save results
+    cls[i] = _cls_nmt
     heracles.write(f"{path}/cls_nmt/cqs_data_nmt_np_{i}_lmax_{lmax}.fits", _cls_nmt)
+print("Done")
+
+# Compute covariance
+print("Computing covariance")
+nmt_cqs_cov = dices.jackknife_covariance(cls, nd=0)
+
+# Save
+print("Saving covariance")
+heracles.write(path+f"covs/cov_nmt_cqs_l1max_{lmax}.fits", nmt_cqs_cov)

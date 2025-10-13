@@ -3,6 +3,7 @@ import fitsio
 import numpy as np
 import healpy as hp
 import heracles
+import heracles.dices as dices
 from heracles.fields import Positions, Shears, Visibility, Weights
 from heracles import transform
 from heracles.healpy import HealpixMapper
@@ -119,6 +120,9 @@ if mask_type == 'rr2':
     mask = hp.ud_grade(mask, nside_out=nside)
 hp.write_map(path+f"mask.fits", mask, overwrite=True)
 
+# Add spin information to mask
+heracles.core.update_metadata(mask, spin=0)
+
 # Fields
 mapper = HealpixMapper(nside=nside, lmax=lmax, deconvolve=False)
 fields = {
@@ -145,25 +149,48 @@ mms = heracles.mixing_matrices(
     mask_fields,
     mask_cls,
     l1max=lmax,
-    l2max=lmax_mask,
+    l2max=lmax,
+    l3max=lmax_mask,
 )
 heracles.write(path+f"/mixmat_l1max_{lmax}_l2max_{lmax_mask}.fits", mms)
 heracles.write(path+f"cls/cls_mask_lmax_{lmax_mask}.fits", mask_cls)
 
+cls = {}
 for i in range(1, n+1):
     print(f"Loading sim {i}", end='\r')
     data_maps = {}
     sim_path = f"../{mode}_sims/{mode}_sim_{i}"
-    POS1 = heracles.read_maps(f"{sim_path}/POS_1.fits")
-    SHE1 = heracles.read_maps(f"{sim_path}/SHE_1.fits")
+    POS1 = heracles.read_maps(f"{sim_path}/POS_1.fits")[('POS', 1)]
+    SHE1 = heracles.read_maps(f"{sim_path}/SHE_1.fits")[('SHE', 1)]
+    POS1 *= mask
+    SHE1 *= mask
+    # spins
+    heracles.core.update_metadata(POS1, spin=0)
+    heracles.core.update_metadata(SHE1, spin=2)
     # Full sky
-    data_maps[("POS", 1)] = POS1[('POS', 1)]
-    data_maps[("SHE", 1)] = SHE1[('SHE', 1)]
-    # Masked
-    data_maps[("POS", 1)] *= mask
-    data_maps[("SHE", 1)] *= mask
+    data_maps[("POS", 1)] = POS1
+    data_maps[("SHE", 1)] = SHE1
     # Compute Cls
     alms = transform(fields, data_maps)
-    cls = heracles.angular_power_spectra(alms)
-    heracles.write(path+f"cls/cls_data_{i}_lmax_{lmax}.fits", cls)
+    _cls = heracles.angular_power_spectra(alms)
+    cls[i] = _cls
+    # Save Cls
+    heracles.write(path+f"cls/cls_data_{i}_lmax_{lmax}.fits", _cls)
 print("Done")
+
+# Binning cls
+nlbins = config.get('nlbins', 20)  # Default to 20 if
+ls = np.arange(lmax + 1)
+ledges = np.logspace(np.log10(10), np.log10(lmax), nlbins + 1)
+lgrid = (ledges[1:] + ledges[:-1]) / 2
+cqs = heracles.binned(cls, ledges)
+
+# Covariance
+print("Computing covariances")
+cls_cov = dices.jackknife_covariance(cls, nd=0)
+cqs_cov = dices.jackknife_covariance(cqs, nd=0)
+
+# Save
+print("Saving covariances")
+heracles.write(path+f"covs/cov_cls_l1max_{lmax}.fits", cls_cov)
+heracles.write(path+f"covs/cov_cqs_l1max_{lmax}.fits", cqs_cov)

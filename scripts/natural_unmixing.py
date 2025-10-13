@@ -55,9 +55,11 @@ unmms = heracles.mixing_matrices(
     mask_fields,
     inv_mask_cls,
     l1max=lmax,
-    l2max=lmax_mask,)
+    l2max=lmax,
+    l3max=lmax_mask)
 heracles.write(path+f"/unmixmat_l1max_{lmax}_l2max_{lmax_mask}.fits", unmms)
 
+cls = {}
 for i in range(1, n+1):
     print(f"Unmixing sim {i}", end='\r')
     # Load cls
@@ -65,4 +67,24 @@ for i in range(1, n+1):
     # PolSpice
     nu_cls = heracles.unmixing._natural_unmixing(data_cls, mask_corr)
     # Save cls
+    cls[i] = nu_cls
     heracles.write(f"{path}/cls_nu/cls_data_nu_{i}_l1max_{lmax}_l2max_{lmax_mask}.fits", nu_cls)
+print("Done")
+
+# Binning cls
+nlbins = config.get('nlbins', 20)  # Default to 20 if not specified
+ls = np.arange(lmax + 1)
+ledges = np.logspace(np.log10(10), np.log10(lmax), nlbins + 1)
+lgrid = (ledges[1:] + ledges[:-1]) / 2
+print(f"Using {len(lgrid)} bins for the covariance matrix.")
+nu_cqs = heracles.binned(cls, ledges)
+
+# compute covariances
+print("Computing covariances")
+nu_cls_cov = heracles.dices.jackknife_covariance(cls, nd=0)
+nu_cqs_cov = heracles.dices.jackknife_covariance(nu_cqs, nd=0)
+
+# Save
+print("Saving covariances")
+heracles.write(path+f"covs/cov_nu_cls_l1max_{lmax}_l2max_{lmax_mask}.fits", nu_cls_cov)
+heracles.write(path+f"covs/cov_nu_cqs_l1max_{lmax}_l2max_{lmax_mask}.fits", nu_cqs_cov)
