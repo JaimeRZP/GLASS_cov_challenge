@@ -28,7 +28,7 @@ nz_1 = nzs['nz_1']
 nz_2 = nzs['nz_2']
 
 # Load theory cls
-cls = heracles.read(f"{path}/cls_theory.fits")
+cls = heracles.read(f"{path}/cls_theory_lmax_{lmax}.fits")
 cls = [cls[f"W{i+1}xW{j+1}"].array for i, j in glass.spectra_indices(nbins)]
 
 # Make GLASS cls
@@ -63,7 +63,7 @@ if mode == "lognormal":
 
 # Check if folder exists
 for i in range(1, n+1):
-    folname = f"{mode}_sim_{i}"
+    folname = f"{mode}_sim_{i}_nside_{nside}"
     print(f"Making sim {i} in folder {folname}", end='\r')
     if not os.path.exists(f"{path}/{folname}"):
         os.makedirs(f"{path}/{folname}")
@@ -115,10 +115,10 @@ for i in range(1, n+1):
 
 
         # Write maps
-        filename = "POS_1.fits"
+        filename = f"POS_1.fits"
         data = {("POS", 1): POS1}
         heracles.write_maps(f"{path}/{folname}/{filename}", data, clobber=True)
 
-        filename = "SHE_1.fits"
+        filename = f"SHE_1.fits"
         data = {("SHE", 1): SHE1}
         heracles.write_maps(f"{path}/{folname}/{filename}", data, clobber=True)

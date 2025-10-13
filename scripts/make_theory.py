@@ -1,14 +1,9 @@
 import yaml
-import os
-import healpy as hp
-import matplotlib.pyplot as plt
 import numpy as np
 import glass
-import glass.ext.camb
 import camb
 import camb.sources
 import heracles
-from cosmology import Cosmology
 
 # Config
 config_path = "./sims_config.yaml"
@@ -66,4 +61,4 @@ cls = [cls_dict[f"W{i+1}xW{j+1}"] for i, j in glass.spectra_indices(nbins)]
 results = {}
 for key in cls_dict.keys():
     results[key] = heracles.Result(cls_dict[key])
-heracles.write(f"{path}/cls_theory.fits", results)
+heracles.write(f"{path}/cls_theory_lmax_{lmax}.fits", results)

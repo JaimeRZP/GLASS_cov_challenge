@@ -12,7 +12,6 @@ def compute_master(f_a, f_b, wsp):
     cl_decoupled = wsp.decouple_cell(cl_coupled)
     return cl_decoupled
 
-
 # Config
 config_path = "./sims_config.yaml"
 with open(config_path, 'r') as f:
@@ -35,12 +34,13 @@ mask = hp.read_map(f"{path}/mask.fits")
 mask_apo = nmt.mask_apodization(mask, 0.0, apotype='C1')
 
 # workspaces
-sim_path = f"../{mode}_sims/{mode}_sim_1"
+sim_path = f"../{mode}_sims/{mode}_sim_1_nside_{nside}"
 POS1 = heracles.read_maps(f"{sim_path}/POS_1.fits")
 SHE1 = heracles.read_maps(f"{sim_path}/SHE_1.fits")
 map_t = POS1['POS', 1]
 map_q = SHE1['SHE', 1][0]
 map_u = SHE1['SHE', 1][1]
+print(map_t.shape, map_q.shape, map_u.shape)
 f0 = nmt.NmtField(mask_apo, [map_t], lmax=lmax)
 f2 = nmt.NmtField(mask_apo, [map_q, map_u], lmax=lmax)
 w00 = nmt.NmtWorkspace.from_fields(f0, f0, b)
@@ -51,7 +51,7 @@ cls = {}
 for i in range(1, n+1):
     print(f"Unmixing sim {i}", end='\r')
     # Load maps
-    sim_path = f"../{mode}_sims/{mode}_sim_{i}"
+    sim_path = f"../{mode}_sims/{mode}_sim_{i}_nside_{nside}"
     POS1 = heracles.read_maps(f"{sim_path}/POS_1.fits")
     SHE1 = heracles.read_maps(f"{sim_path}/SHE_1.fits")
     map_t = POS1['POS', 1]
@@ -84,4 +84,4 @@ nmt_cqs_cov = dices.jackknife_covariance(cls, nd=0)
 
 # Save
 print("Saving covariance")
-heracles.write(path+f"covs/cov_nmt_cqs_l1max_{lmax}.fits", nmt_cqs_cov)
+heracles.write(path+f"/covs/cov_nmt_cqs_l1max_{lmax}.fits", nmt_cqs_cov)

@@ -1,6 +1,7 @@
 import yaml
 import heracles
 import numpy as np
+from heracles import dices
 from heracles.result import truncated
 from heracles.twopoint import invert_mixing_matrix, apply_mixing_matrix
 
@@ -47,10 +48,10 @@ cqs = heracles.binned(cls, ledges)
 
 # compute covariance
 print("Computing covariance")
-cls_cov = heracles.dices.jackknife_covariance(cls, nd=0)
-cqs_cov = heracles.dices.jackknife_covariance(cqs, nd=0)
+cls_cov = dices.jackknife_covariance(cls, nd=0)
+cqs_cov = dices.jackknife_covariance(cqs, nd=0)
 
 # Save
 print("Saving covariances")
-heracles.write(path+f"covs/cov_inv_cls_l1max_{lmax}_l2max_{lmax_mask}.fits", cls_cov)
-heracles.write(path+f"covs/cov_inv_cqs_l1max_{lmax}_l2max_{lmax_mask}.fits", cqs_cov)
+heracles.write(path+f"/covs/cov_inv_cls_l1max_{lmax}_l2max_{lmax_mask}.fits", cls_cov)
+heracles.write(path+f"/covs/cov_inv_cqs_l1max_{lmax}_l2max_{lmax_mask}.fits", cqs_cov)

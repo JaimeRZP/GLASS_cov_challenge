@@ -1,6 +1,7 @@
 import yaml
 import numpy as np
 import heracles
+import heracles.dices as dices
 from heracles.fields import Positions, Shears, Visibility, Weights
 from heracles.healpy import HealpixMapper
 
@@ -33,7 +34,9 @@ mask_corr = {}
 inv_mask_cls = {}
 
 m_keys = list(mask_cls.keys())
+print(f"Computing pseudo-inverse mask cls")
 for m_key in m_keys:
+    print(f"Computing pseudo-inverse of {m_key}", end='\r')
     _m = mask_cls[m_key]
     _wm = heracles.transforms.cl2corr(_m).T[0]
     mask_corr[m_key] = _wm
@@ -51,6 +54,7 @@ for m_key in m_keys:
                                           ell=mask_cls[m_key].ell)
 
 # inv Mixing matrices
+print("Computing unmixing matrices")
 unmms = heracles.mixing_matrices(
     mask_fields,
     inv_mask_cls,
@@ -81,10 +85,10 @@ nu_cqs = heracles.binned(cls, ledges)
 
 # compute covariances
 print("Computing covariances")
-nu_cls_cov = heracles.dices.jackknife_covariance(cls, nd=0)
-nu_cqs_cov = heracles.dices.jackknife_covariance(nu_cqs, nd=0)
+nu_cls_cov = dices.jackknife_covariance(cls, nd=0)
+nu_cqs_cov = dices.jackknife_covariance(nu_cqs, nd=0)
 
 # Save
 print("Saving covariances")
-heracles.write(path+f"covs/cov_nu_cls_l1max_{lmax}_l2max_{lmax_mask}.fits", nu_cls_cov)
-heracles.write(path+f"covs/cov_nu_cqs_l1max_{lmax}_l2max_{lmax_mask}.fits", nu_cqs_cov)
+heracles.write(path+f"/covs/cov_nu_cls_l1max_{lmax}_l2max_{lmax_mask}.fits", nu_cls_cov)
+heracles.write(path+f"/covs/cov_nu_cqs_l1max_{lmax}_l2max_{lmax_mask}.fits", nu_cqs_cov)

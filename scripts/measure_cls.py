@@ -118,8 +118,8 @@ if mask_type == 'rr2':
     path_mask = f"../{mode}_sims/{mask_type}_mask.fits"
     mask = _read_map(path_mask, nside)
     mask = hp.ud_grade(mask, nside_out=nside)
-hp.write_map(path+f"mask.fits", mask, overwrite=True)
-
+hp.write_map(f"../masks/{mask_type}_mask_nside_{nside}.fits", mask, overwrite=True)
+print("computed mask")
 # Add spin information to mask
 heracles.core.update_metadata(mask, spin=0)
 
@@ -159,7 +159,7 @@ cls = {}
 for i in range(1, n+1):
     print(f"Loading sim {i}", end='\r')
     data_maps = {}
-    sim_path = f"../{mode}_sims/{mode}_sim_{i}"
+    sim_path = f"../{mode}_sims/{mode}_sim_{i}_nside_{nside}"
     POS1 = heracles.read_maps(f"{sim_path}/POS_1.fits")[('POS', 1)]
     SHE1 = heracles.read_maps(f"{sim_path}/SHE_1.fits")[('SHE', 1)]
     POS1 *= mask
@@ -192,5 +192,5 @@ cqs_cov = dices.jackknife_covariance(cqs, nd=0)
 
 # Save
 print("Saving covariances")
-heracles.write(path+f"covs/cov_cls_l1max_{lmax}.fits", cls_cov)
-heracles.write(path+f"covs/cov_cqs_l1max_{lmax}.fits", cqs_cov)
+heracles.write(path+f"/covs/cov_cls_l1max_{lmax}.fits", cls_cov)
+heracles.write(path+f"/covs/cov_cqs_l1max_{lmax}.fits", cqs_cov)
