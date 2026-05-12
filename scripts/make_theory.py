@@ -12,11 +12,12 @@ with open(config_path, 'r') as f:
 lmax = config['lmax']
 mode = config['mode']  # "lognormal" or "gaussian"
 
-path = f"../{mode}_sims"
+path = f"/pscratch/sd/j/jaimerz/{mode}_sims"
 nbins = 2
-h = 0.7
-Oc = 0.25
-Ob = 0.05
+h = 0.67
+Om = 0.319
+Ob = 0.049
+Oc = Om - Ob
 
 # make nz's
 z = np.arange(0.0, 5.01, 0.01)

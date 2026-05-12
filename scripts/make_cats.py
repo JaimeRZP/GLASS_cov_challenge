@@ -1,5 +1,6 @@
 import yaml
 import os
+import argparse
 import healpy as hp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,263 +10,171 @@ import camb
 import camb.sources
 import heracles
 from cosmology import Cosmology
+from astropy.io import fits
+from scipy.ndimage import gaussian_filter1d
+
+# Note: We do not model source clustering
+# This makes comparing to predictions easier.
+# B-modes shouldn't care about this either.
+# However, it migth be a problem in the future.
 
 
-def spectra_indices(n):
-    i, j = np.tril_indices(n)
-    return np.transpose([i, i - j])
-    
-# Config
-config_path = "./sims_config.yaml"
-with open(config_path, 'r') as f:
-    config = yaml.safe_load(f)
-n = config['nsims']
-nside = config['nside']
-lmax = config['lmax']
-mode = config['mode']  # "lognormal" or "gaussian"
-nbins = 2
-path = f"/pscratch/sd/j/jaimerz/{mode}_sims"
-mask_type = "tr1"
+# Per-mask-type galaxy number densities (per sq. arcmin) and ellipticity sigmas.
+# Keep these at module level so it's easy to add new mask types.
+NGALS = {
+    "tr1": {
+        1: 3.630431,
+        2: 3.369029,
+        3: 3.417767,
+        4: 3.333166,
+        5: 3.442296,
+        6: 3.253078,
+    },
+    "dr1_south": {
+        1: 4.049680,
+        2: 3.800670,
+        3: 3.881422,
+        4: 3.787431,
+        5: 3.929530,
+        6: 3.767061,
+    },
+}
 
-# Load nzs
-nzs = np.load(f"{path}/nzs.npz")
-z = nzs['z']
-nz_1 = nzs['nz_1']
-nz_2 = nzs['nz_2']
+SIGMA_E = {
+    "tr1": {
+        1: 0.2672282382294292,
+        2: 0.2662526016273488,
+        3: 0.2590877242553745,
+        4: 0.2591418343365571,
+        5: 0.2550252629962767,
+        6: 0.2641187068627740,
+    },
+    "dr1_south": {
+        1: 0.2676301,
+        2: 0.2665834,
+        3: 0.2592022,
+        4: 0.2592046,
+        5: 0.2551500,
+        6: 0.2645000,
+    },
+}
 
-# Load theory cls
-cls = heracles.read(f"{path}/cls_theory_lmax_{lmax}.fits")
-cl_pp = cls["W1xW1"].array
-cl_ep = cls["W2xW1"].array
-cl_pe = cls["W1xW2"].array
-cl_ee = cls["W2xW2"].array
 
-cls = [cls[f"W{i+1}xW{j+1}"].array for i, j in spectra_indices(nbins)]
+def main():
+    # Config from command line
+    parser = argparse.ArgumentParser(description="Generate tomographic shear catalogs from sim maps.")
+    parser.add_argument(
+        "--mode",
+        type=str,
+        required=True,
+        choices=["gaussian", "lognormal",],
+        help="sim type.",
+    )
+    parser.add_argument(
+        "--mask_type", 
+        type=str,
+        required=True,
+        choices=["dr1_south", "tr1"],
+        help="mask type.",
+    )
+    parser.add_argument(
+        "--nsims",
+        type=int,
+        default=None,
+        help="Number of sims to process.",
+    )
+    args = parser.parse_args()
+    print(f"Using mode: {args.mode}, mask_type: {args.mask_type}")
 
-# Make GLASS cls
-shells_1 = [
-    glass.RadialWindow(z, nz_1, np.trapezoid(z * nz_1, z) / np.trapezoid(nz_1, z))
-]
-shells_2 = [
-    glass.RadialWindow(z, nz_2, np.trapezoid(z * nz_2, z) / np.trapezoid(nz_2, z))
-]
+    # Config
+    n = args.nsims
+    nside = 1024
+    lmax =  3000
+    mode = args.mode
+    mask_type = args.mask_type
+    path = f"/pscratch/sd/j/jaimerz/{mode}_sims"
 
-# vamp
-if mask_type != "dummy":
-    path_mask = f"../masks/{mask_type}_mask_nside_{nside}.fits"
-    mask = hp.read_map(path_mask)
-else:
-    mask = np.ones(hp.nside2npix(nside))
-print("computed mask")
-# Add spin information to mask
-heracles.core.update_metadata(mask, spin=0)
-
-# Config
-# galaxy density (using 1/100 of the expected galaxy number density for Stage-IV)
-n_arcmin2 = 0.3
-
-# true redshift distribution following a Smail distribution
-z = np.arange(0.0, 3.0, 0.01)
-dndz = glass.smail_nz(z, z_mode=0.9, alpha=2.0, beta=1.5)
-dndz *= n_arcmin2
-
-# distribute dN/dz over the radial window functions
-ngal = glass.partition(z, dndz, shells)
-
-# compute tomographic redshift bin edges with equal density
-nbins = 10
-zbins = glass.equal_dens_zbins(z, dndz, nbins=nbins)
-
-# photometric redshift error
-sigma_z0 = 0.03
-
-# constant bias parameter for all shells
-bias = 1.2
-
-# ellipticity standard deviation as expected for a Stage-IV survey
-sigma_e = 0.27
-
-# Check if folder exists
-for i in range(1, n+1):
-    # Generate maps
-    rng = np.random.default_rng(seed=i)
-    folname = f"{mode}_sim_{i}_nside_{nside}"
-    print(f"Making cat {i} in folder {folname}", end='\r')
-    
-    file_name = f"{path}/{folname}/{filename}/POS_1_cat.fits"
-    if not os.path.exists(f"file_name"):
-        # Load Maps
-        POS1 = heracles.read_maps(f"{path}/{folname}/POS_1.fits")[("POS", 1)]
-
-        # Generate catalog
-        POS_catalogue = np.empty(
-            0,
-            dtype=[
-                ("RA", float),
-                ("DEC", float),
-                ("Z_TRUE", float),
-                ("PHZ", float),
-                ("ZBIN", int),
-            ],
+    # Validate: we have per-bin inputs for this mask type
+    if mask_type not in NGALS or mask_type not in SIGMA_E:
+        raise ValueError(
+            f"No ngals/sigma_e table defined for mask_type={mask_type!r}. "
+            f"Available: {sorted(set(NGALS) & set(SIGMA_E))}."
         )
-        
-        # generate galaxy positions from the matter density contrast
-        for gal_lon, gal_lat, gal_count in glass.positions_from_delta(
-            ngal[i],
-            POS1,
-            bias,
-            mask,
-            rng=rng,
-        ):
-            # generate random redshifts over the given shell
-            gal_z = glass.redshifts(gal_count, shells_1, rng=rng)
-    
-            # generator photometric redshifts using a Gaussian model
-            gal_phz = glass.gaussian_phz(gal_z1, sigma_z0, rng=rng)
-    
-            # attach tomographic bin IDs to galaxies, based on photometric redshifts
-            gal_zbin = np.digitize(gal_phz, np.unique(zbins)) - 1
-    
-            # make a mini-catalogue for the new rows
-            rows = np.empty(gal_count, dtype=catalogue.dtype)
-            rows["RA"] = gal_lon
-            rows["DEC"] = gal_lat
-            rows["Z_TRUE"] = gal_z
-            rows["PHZ"] = gal_phz
-            rows["ZBIN"] = gal_zbin
-    
-            # add the new rows to the catalogue
-            POS_catalogue = np.append(catalogue, rows)
-        
-        print(f"Total number of galaxies sampled: {len(POS_catalogue):,}")
-        glass.write_catalog(filename, POS_catalogue)
+    ngals = NGALS[mask_type]
+    sigma_e = SIGMA_E[mask_type]
 
-    file_name = f"{path}/{folname}/{filename}/SHE_1_cat.fits"
-    if not os.path.exists(f"file_name"):
-        # Load Maps
-        SHE1 = heracles.read_maps(f"{path}/{folname}/SHE_1.fits")[("SHE", 1)]
-        
-        # Generate catalog
-        SHE_catalogue = np.empty(
-            0,
-            dtype=[
-                ("RA", float),
-                ("DEC", float),
-                ("Z_TRUE", float),
-                ("PHZ", float),
-                ("ZBIN", int),
-                ("G1", float),
-                ("G2", float),
-            ],
-        )
-        
-        # generate galaxy positions from the matter density contrast
-        for gal_lon, gal_lat, gal_count in glass.positions_from_delta(
-            ngal[i],
-            SHE1,
-            bias,
-            mask,
-            rng=rng,
-        ):
-            # generate random redshifts over the given shell
-            gal_z = glass.redshifts(gal_count, shells_2, rng=rng)
-    
-            # generator photometric redshifts using a Gaussian model
-            gal_phz = glass.gaussian_phz(gal_z2, sigma_z0, rng=rng)
-    
-            # attach tomographic bin IDs to galaxies, based on photometric redshifts
-            gal_zbin = np.digitize(gal_phz, np.unique(zbins)) - 1
+    # Mask
+    if mask_type == "fullsky":
+        mask = np.ones(hp.nside2npix(nside))
+    else:
+        path_mask = f"/pscratch/sd/j/jaimerz/masks/{mask_type}_mask_nside_{nside}.fits"
+        mask = hp.read_map(path_mask)
 
-            # generate galaxy ellipticities from the chosen distribution
-            gal_eps = glass.ellipticity_intnorm(gal_count, sigma_e, rng=rng, xp=np)
+    print("computed mask")
+    # Add spin information to mask
+    heracles.core.update_metadata(mask, spin=0)
 
-            # apply the shear fields to the ellipticities
-            gal_she = glass.galaxy_shear(
-                gal_lon,
-                gal_lat,
-                gal_eps,
-                kappa_i,
-                gamm1_i,
-                gamm2_i,
-            )
-    
-            # make a mini-catalogue for the new rows
-            rows = np.empty(gal_count, dtype=catalogue.dtype)
-            rows["RA"] = gal_lon
-            rows["DEC"] = gal_lat
-            rows["Z_TRUE"] = gal_z
-            rows["PHZ"] = gal_phz
-            rows["ZBIN"] = gal_zbin
-            rows["E1"] = gal_she.real
-            rows["E2"] = gal_she.imag
-    
-            # add the new rows to the catalogue
-            SHE_catalogue = np.append(catalogue, rows)
+    # Load nzs
+    z = np.linspace(0.0, 3.0, 3000)
+    nzs_wl_hdul = fits.open("/pscratch/sd/j/jaimerz/lognormal_sims/TR1_v1_Nz_WL_C2020_sel_pv.fits")
+    dndz = gaussian_filter1d(nzs_wl_hdul[1].data["N_Z"].T, 10, axis=0)
+    n_bins = 6
 
-        print(f"Total number of galaxies sampled: {len(SHE_catalogue):,}")
-        glass.write_catalog(file_name, SHE_catalogue)
+    # Check if folder exists
+    for i in range(1, n + 1):
+        # Generate maps
+        rng = np.random.default_rng(seed=i)
+        folname = f"{mode}_sim_{i}_nside_{nside}"
+        print(f"Making cat {i} in folder {folname}", end="\r")
+        # Generate folder
+        if not os.path.exists(f"{path}/{mask_type}/cats/{folname}"):
+            os.makedirs(f"{path}/{mask_type}/cats/{folname}")
+        maps_path = f"{path}/fullsky/maps/{folname}/SHE.fits"
+        cat_path = f"{path}/{mask_type}/cats/{folname}/SHE.fits"
+        if not os.path.exists(cat_path):
+            with glass.write_catalog(cat_path) as out:
+                for j in range(1, n_bins + 1):
+                    SHE = heracles.read_maps(maps_path)[("SHE", j)]
+                    Q1, U1 = SHE
+                    for gal_lon, gal_lat, gal_count in glass.positions_from_delta(
+                        ngals[j],
+                        np.zeros_like(Q1), # Gower St processing: delta_i
+                        0.0, # b=1.2 for SLC, but we ignore SLC for now
+                        mask,
+                        rng=rng,
+                    ):  
+                        # this shold become glass.redshifts(shells[i])
+                        gal_z = glass.redshifts_from_nz(
+                            gal_count,
+                            z,
+                            dndz.T[j - 1],
+                            rng=rng,
+                            warn=False,
+                        )
+                        gal_eps = glass.ellipticity_intnorm(
+                            gal_count,
+                            sigma_e[j],
+                            rng=rng,
+                        )
+                        gal_she = glass.galaxy_shear(
+                            gal_lon,
+                            gal_lat,
+                            gal_eps,
+                            np.zeros_like(Q1),
+                            Q1,
+                            U1,
+                            reduced_shear=False,
+                        )
+                        out.write(
+                            RA=gal_lon,
+                            DEC=gal_lat,
+                            Z=gal_z,
+                            E1=gal_she.real,
+                            E2=gal_she.imag,
+                            TOMBINID=np.full(gal_count, j, dtype=np.int32),
+                        )
+    print("Done")
 
-    file_name = f"{path}/{folname}/{filename}/SHE_1_wb_cat.fits"
-    if not os.path.exists(f"file_name"):
-        # Load Maps
-        SHE1_wb = heracles.read_maps(f"{path}/{folname}/SHE_1_wb.fits")[("SHE", 1)]
 
-        # Generate catalog
-        SHE_catalogue_wb = np.empty(
-            0,
-            dtype=[
-                ("RA", float),
-                ("DEC", float),
-                ("Z_TRUE", float),
-                ("PHZ", float),
-                ("ZBIN", int),
-                ("G1", float),
-                ("G2", float),
-            ],
-        )
-        
-        # generate galaxy positions from the matter density contrast
-        for gal_lon, gal_lat, gal_count in glass.positions_from_delta(
-            ngal[i],
-            SHE1_wb,
-            bias,
-            mask,
-            rng=rng,
-        ):
-            # generate random redshifts over the given shell
-            gal_z = glass.redshifts(gal_count, shells_2, rng=rng)
-    
-            # generator photometric redshifts using a Gaussian model
-            gal_phz = glass.gaussian_phz(gal_z2, sigma_z0, rng=rng)
-    
-            # attach tomographic bin IDs to galaxies, based on photometric redshifts
-            gal_zbin = np.digitize(gal_phz, np.unique(zbins)) - 1
-
-            # generate galaxy ellipticities from the chosen distribution
-            gal_eps = glass.ellipticity_intnorm(gal_count, sigma_e, rng=rng, xp=np)
-
-            # apply the shear fields to the ellipticities
-            gal_she = glass.galaxy_shear(
-                gal_lon,
-                gal_lat,
-                gal_eps,
-                kappa_i,
-                gamm1_i,
-                gamm2_i,
-            )
-    
-            # make a mini-catalogue for the new rows
-            rows = np.empty(gal_count, dtype=catalogue.dtype)
-            rows["RA"] = gal_lon
-            rows["DEC"] = gal_lat
-            rows["Z_TRUE"] = gal_z
-            rows["PHZ"] = gal_phz
-            rows["ZBIN"] = gal_zbin
-            rows["E1"] = gal_she.real
-            rows["E2"] = gal_she.imag
-    
-            # add the new rows to the catalogue
-            SHE_catalogue_wb = np.append(catalogue, rows)
-        
-        print(f"Total number of galaxies sampled: {len(SHE_catalogue_wb):,}")
-        glass.write_catalog(file_name, SHE_catalogue_wb)
+if __name__ == "__main__":
+    main()
